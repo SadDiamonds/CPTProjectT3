@@ -1,4 +1,6 @@
-# The Document
+# **The Document**
+
+-------------------------------------------------------------
 
 ## Project Description
 This project aims to develop an efficient charity platform that uses the process of matching donations with recipients' needs. The system categorises requests from individuals in need, allowing donated items to be sorted accordingly. When a donation matches a recipient's requirements, the platform automatically notifies the recipient, enabling them to collect the item at a designated location. This approach improves the efficiency and effectiveness of our charity giving by ensuring that donations reach those who need them most in a timely manner.
