@@ -24,3 +24,14 @@ This project aims to develop an efficient charity platform that uses the process
 |Login/Signup Page|This page is aimed at registering an user, it requires the user to provide an email, name and password (encrypted) to sign up to the website, the purpose of this is to make sure that there is a way to identify the user when they are collecting or donating items, it also makes sure that there are no one that is making multiple accounts to leech off the generocity of the company.|
 |Colour palette|Primarily: Grey. Secondary:White. Other colours: Orange|
 |Other pages|Profile page, Request items page, donation 'points' page, top donaters (weekly, monthly). These are the pages that are not included in the framework.|
+
+### Images of framework
+
+**Home Page**
+![Home page](Home.png)
+
+**Donate Page**
+![Donate page](Donate.png)
+
+**Login Page**
+![Login Page](Login.png)
