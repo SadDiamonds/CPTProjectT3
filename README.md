@@ -28,10 +28,10 @@ This project aims to develop an efficient charity platform that uses the process
 ### Images of framework
 
 **Home Page**
-![Home page](Home.png)
+![](Home.png)
 
 **Donate Page**
-![Donate page](Donate.png)
+![](Donate.png)
 
 **Login Page**
-![Login Page](Login.png)
+![](Login.png)
