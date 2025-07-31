@@ -12,3 +12,10 @@ This project aims to develop an efficient charity platform that uses the process
 - Website should be able to load within 1.5s
 - All passwords should be encrypted for increased security also locations of users should be encrypted as well in case of a data leak
 - The system should be able to handle at least 1000+ people at the same time without slowing down
+
+
+## **Week 2 - Creating framework for the website**
+|Aspect of Design|Description|
+|------------------|----------------------------------|
+|Landing/Home page|The home page should display the logo and website name, along with the ability to navigate to different areas of the website such as donate, login/sign up,etc. It also should have to ability to swap the login with the user profile when the user is logged in, the page should also have description of the company's goal/purpose|
+|Donate Page|
