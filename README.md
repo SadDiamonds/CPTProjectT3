@@ -48,16 +48,19 @@ I've also created a flow diagram to show the user flow of data across the pages.
 ### Alternate Design
 
 **Page 1 - Home**
+
 In the alternate design for the home page, I added extra buttons on the top so the user has a better time navigating through the website, I also added some "stories" where users can share their experiences.
 
 ![](Alt-Home.png)
 
 **Page 2 - Donate**
+
 In the alternate design for the Donate page, I simplified the page where the main focus is to explain to the donator what is happening when they donate, I also decided that the top yellow placeholder would be universal across the website.
 
 ![](Alt-Donate.png)
 
 **Page 3 - Login**
+
 In the alternate design for the Login page, I removed the border and also enlargened the font so that all people can see.
 
 ![](Alt-Login.png)
