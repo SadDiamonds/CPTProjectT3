@@ -65,4 +65,4 @@ In the alternate design for the Login page, I removed the border and also enlarg
 ### Flow diagram
 This is the flow diagram explaining the background stuff that occurs when any user clicks on any of the buttons.
 
-! [](Flow-Of-Data.png)
+![](Flow-Of-Data.png)
