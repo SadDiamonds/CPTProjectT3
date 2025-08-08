@@ -49,5 +49,3 @@ This project aims to develop an efficient charity platform that uses the process
 | Donate Page | Simplified layout focusing on explaining the donation process. Introduced a universal yellow placeholder at the top across the website. ![](Alt-Donate.png) |
 | Login Page | Removed borders and enlarged the font for better accessibility. ![](Alt-Login.png) |
 | Flow Diagram | Visual representation of the user flow and background processes triggered by user actions. ![](Flow-Of-Data.png) |
-
-![](Flow-Of-Data.png)
