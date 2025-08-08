@@ -41,31 +41,13 @@ This project aims to develop an efficient charity platform that uses the process
 
 
 ## **Week 3 - Alternate Design - Playing with Possibilities**
-This week is for creating alternate designs for the website, I went with a warm and welcoming design mixed with simplicity to create a calming design where it does not impact the eyes too much, I changed the font to a blocky yet rounded font to create a sense of security.
 
-I've also created a flow diagram to show the user flow of data across the pages.
-
-### Alternate Design
-
-**Page 1 - Home**
-
-In the alternate design for the home page, I added extra buttons on the top so the user has a better time navigating through the website, I also added some "stories" where users can share their experiences.
-
-![](Alt-Home.png)
-
-**Page 2 - Donate**
-
-In the alternate design for the Donate page, I simplified the page where the main focus is to explain to the donator what is happening when they donate, I also decided that the top yellow placeholder would be universal across the website.
-
-![](Alt-Donate.png)
-
-**Page 3 - Login**
-
-In the alternate design for the Login page, I removed the border and also enlargened the font so that all people can see.
-
-![](Alt-Login.png)
-
-### Flow diagram
-This is the flow diagram explaining the background stuff that occurs when any user clicks on any of the buttons.
+| Aspect of Design | Description |
+|------------------|-------------|
+| Overall Theme | Warm, welcoming, and calming design with a blocky yet rounded font to create a sense of security. |
+| Home Page | Added extra navigation buttons at the top for easier navigation. Included a "stories" section for users to share their experiences. ![](Alt-Home.png) |
+| Donate Page | Simplified layout focusing on explaining the donation process. Introduced a universal yellow placeholder at the top across the website. ![](Alt-Donate.png) |
+| Login Page | Removed borders and enlarged the font for better accessibility. ![](Alt-Login.png) |
+| Flow Diagram | Visual representation of the user flow and background processes triggered by user actions. ![](Flow-Of-Data.png) |
 
 ![](Flow-Of-Data.png)
