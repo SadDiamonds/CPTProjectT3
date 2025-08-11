@@ -54,116 +54,70 @@ This project aims to develop an efficient charity platform that uses the process
 
 ### Designing an algorithm for one functional component
 
-### Design 2 test cases
-
 #### **Pseudocode**
 
-1. Authenticate and Authorise
-- 1.1 Verify `session_token`: decode, check expiry
-- 1.2 if invalid -> `return "error: authentication required"`
-- 1.3 Fetch `donor_id` from session
+#### Part 1: Donation Submission
+1. Declare variables: `session_token`, `donation_data`, `donation_id`, `candidates`, `best_match`, `match_id`, `recipient_response`
 
-2. Validate Input
-- 2.1 Check required fields (`item_title`, `category`, `location`)
-- 2.2 Validate field types, allow enums (category, conditions)
-- 2.3 Validate `images[]` sizes and types (scan for malware if applicable)
-- 2.4 If validation fails -> return error: `"validation_failed with details"`
+2. Prompt user to log in and enter donation details (title, category, condition, quantity, location, availability, images)
 
-3. Normalise
-- 3.1 Trim strings, remove unsafe characters, limit lengths
-- 3.3 Enforce privacy options (do not store contact if `privacy_options` restricts it)
+3. Get `session_token` and `donation_data`
 
-4. Begin Database Transaction
-- 4.1 Start DB transaction to ensure security for initial save + possible immediate match
+4. IF `session_token` is invalid THEN
+- 4.1. Display error message: "Authentication required"
+- 4.2. Prompt user to log in again
+- 4.3. Get new `session_token`
 
-5. Create Donation Record
-- 5.1 Insert into `Donations` with status = `PENDING_MATCH` (include donor_id)
-- 5.2 Save images to object store and store refs in DB
-- 5.3 Commit the insert (but keep transaction open if attempting immediate match in same transaction)
+5. ENDIF
 
-6. Check for Immediate Matching Candidates
-- 6.1 Build candidate query against `Recipients` where:
+6. IF any required field in `donation_data` is missing (e.g., title, category, location) THEN
+- 6.1. Display error message: "Missing required information"
+- 6.2. Prompt user to re-enter donation details
+- 6.3. Get updated `donation_data`
 
-- `active = true`
-- `need_category == donation.category` (or category mapping)
-- `location` within acceptable radius (e.g., 20km) OR matches recipient’s delivery preference
-- `condition` acceptable to recipient (if required)
-- `quantity_needed > 0`
+7. ENDIF
 
-- 6.2 If zero candidates → go to Step 9 (no immediate match)
-- 6.3 If candidates found → compute a match score for each candidate (see Step 7)
+8. Normalise `donation_data` (trim text, validate categories)
 
-7. Scoring Function (ex)
-- 7.1 Score components (weighted):
-   Category match (binary) -> weight 40%
-   Distance score (closer higher) -> weight 25%
-   Urgency match (recipient urgency vs donation availability) -> weight 20%
-   Quantity fit (donation >= recipient need) -> weight 10%
-   Past donor/recipient compatibility (trust metrics) -> weight 5%
+9. Store donation in database with `status = PENDING_MATCH` and get `donation_id`
 
-- 7.2 Compute `score = w1*category + w2*distance + ...`
-- 7.3 Sort candidates by descending score
+#### Part 2: Matching Process
+10. Search for matching recipients in database where category matches and location is within allowed radius
+11. IF `candidates` list is empty THEN
+- 11.1. Queue `donation_id` for later matching attempts
+- 11.2. Display message: "Donation saved. We’ll notify you when a match is found."
+12. ELSE
+- 12.1. Score each candidate based on category match, distance, urgency, quantity, and trust rating
+- 12.2. Select `best_match` with highest score
+- 12.3. Create match record linking `donation_id` and `best_match.id`, set status = `PENDING_CONFIRMATION`, and get `match_id`
+- 12.4. Send notification to recipient with match details
+- 12.5. Send notification to donor that a match is pending recipient confirmation
+- 12.6. Display message: "Match found! Waiting for recipient confirmation."
+13. ENDIF
 
-8. Reserve Top Candidate
-- 8.1 Select top candidate `recipient_id`
-- 8.2 Create Matches record with `status = PENDING_CONFIRMATION`, `reserved_until = now + RESERVATION_TTL` (e.g., 48 hours)
-- 8.3 Update `Donations.status = RESERVED` and link `match_id`
-- 8.4 Commit DB transaction
-- 8.5 Enqueue notification job (email/SMS/in-app) with `match_id` to notify recipient and donor (respecting privacy options)
-- 8.6 Return `status: matched` with donation_id and match_id
+#### Part 3: Recipient Confirmation
+14. Wait for `recipient_response` (Accept or Decline) from notification link
+15. IF `recipient_response` = Accept THEN
+- 15.1. Verify that donation is still available and not expired
+- 15.2. Update match status = `CONFIRMED`
+- 15.3. Update donation status = `MATCHED_CONFIRMED`
+- 15.4. Notify donor to arrange pickup or delivery
+16. ELSE IF `recipient_response` = Decline THEN
+- 16.1. Update match status = `DECLINED`
+- 16.2. Update donation status = `PENDING_MATCH`
+- 16.3. Return to Step 10 to search for a new match
+17. ENDIF
 
-9. No Immediate Match
-- 9.1 Commit DB transaction (if still open) keeping `Donations.status = PENDING_MATCH`
-- 9.2 Insert into matching queue with backoff schedule (e.g., immediate retry after 1 hour, daily for 7 days)
-- 9.3 Creates public listing for recipients to browse (If donator allows)
-- 9.4 Return `status: queued_unmatched`.
+#### Part 4: Handover and Completion
+18. When both donor and recipient confirm logistics, set donation status = `IN_TRANSIT` or `READY_FOR_PICKUP`
+19. After item is received, recipient confirms delivery via system
+20. Update donation status = `COMPLETED`
+21. Update match status = `COMPLETED`
+22. Prompt donor and recipient for feedback and store ratings
+23. Log event in system for analytics
+24. Display final message: "Donation successfully completed."
 
-10. Asynchronous Match Worker (background)
-- 10.1 Periodically pick `PENDING_MATCH` donations
-- 10.2 Re-run matching candidate search & scoring (Steps 6–8)
-- 10.3 If a match is made, proceed to reservation/notifications
-- 10.4 If donation expires (available_until passed) -> mark `Donations.status = EXPIRED` and notify donor of expiry
-
-11. Notifications and Confirmation
-- 11.1 Send recipient notification (email/SMS/in-app), including:
-
-- Donation details (title, description, location if allowed by donor privacy settings)
-- Link/button to “Accept” or “Decline” donation
-
-- 11.2 **Send donor notification** that a match is pending recipient confirmation
-
-12. Recipient Action Handling
-- 12.1 If recipient clicks “**Accept**”:
-- Verify that the match is still valid (donation not expired, not already accepted by another recipient)
-- Update `Matches.status = CONFIRMED`
-- Update `Donations.status = MATCHED_CONFIRMED`
-- Notify donor to arrange handover (contact info exchanged if allowed by privacy settings)
-
-- 12.2 If recipient clicks “**Decline**”:
-- Update `Matches.status = DECLINED`
-- Set `Donations.status = PENDING_MATCH` again
-- Trigger the asynchronous match worker to find a new recipient
-
-13. Handover and Completion
-- 13.1 Once both parties agree on logistics:
-- Mark donation as “In Transit” or “Ready for Pickup”
-
-- 13.2 After the item is received, either:
-- Recipient confirms receipt via app
-- Or system auto-confirms after a timeout if no disputes reported
-
-- 13.3 Update:
-- `Donations.status = COMPLETED`
-- `Matches.status = COMPLETED`
-
-14. Feedback/Review system
-- 14.1 Prompt both donor and recipient for feedback and ratings
-- 14.2 Store ratings for trust score calculations in future matches
-
-15. Data Logging
-- 15.1 Log all key events (submission, match attempt, notification, acceptance, completion) in an `EventLog` table
-- 15.2 These logs are used for: Analytics and **Fraud detection**/**Abuse prevention**
-
+### Design 2 Test Cases
 **Test Case 1**
 
 Test Case ID: A unique identifier for easy reference.
