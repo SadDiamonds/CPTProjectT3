@@ -95,12 +95,11 @@ This project aims to develop an efficient charity platform that uses the process
 
 7. Scoring Function (ex)
 - 7.1 Score components (weighted):
-
-- Category match (binary) → weight 40%
-- Distance score (closer higher) → weight 25%
-- Urgency match (recipient urgency vs donation availability) → weight 20%
-- Quantity fit (donation >= recipient need) → weight 10%
-- Past donor/recipient compatibility (trust metrics) → weight 5%
+   Category match (binary) -> weight 40%
+   Distance score (closer higher) -> weight 25%
+   Urgency match (recipient urgency vs donation availability) -> weight 20%
+   Quantity fit (donation >= recipient need) -> weight 10%
+   Past donor/recipient compatibility (trust metrics) -> weight 5%
 
 - 7.2 Compute `score = w1*category + w2*distance + ...`
 - 7.3 Sort candidates by descending score
