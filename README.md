@@ -170,4 +170,4 @@ Expected Result:
 
 Priority: Very high
 
-![](hq720.png)
+![](hq720.jpg)
