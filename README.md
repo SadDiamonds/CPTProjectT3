@@ -124,10 +124,13 @@ This project aims to develop an efficient charity platform that uses the process
 #### **Test Case 1**
 
 Test Case ID: TC001
+
 Test Case Name: Verify that a registered user can login successfully with correct credentials
+
 Preconditions: 
 - User account exists in the database
 - User is on the login page
+
 Test Steps:
 1. Navigate to login page
 2. Enter valid email address in the email field
@@ -144,8 +147,11 @@ Priority: High
 #### **Test Case 2**
 
 Test Case ID: TC002
+
 Test Case Name: Verify that a donor’s item is matched with an eligible recipient based on category and location
+
 Preconditions:
+
 - Donor is logged in
 - At least one recipient with matching category and location exists in the database
 
