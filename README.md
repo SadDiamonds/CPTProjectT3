@@ -56,7 +56,7 @@ This project aims to develop an efficient charity platform that uses the process
 
 #### **Pseudocode**
 
-#### Part 1: Donation Submission
+##### Part 1: Donation Submission
 1. Declare variables: `session_token`, `donation_data`, `donation_id`, `candidates`, `best_match`, `match_id`, `recipient_response`
 
 2. Prompt user to log in and enter donation details (title, category, condition, quantity, location, availability, images)
@@ -81,7 +81,7 @@ This project aims to develop an efficient charity platform that uses the process
 
 9. Store donation in database with `status = PENDING_MATCH` and get `donation_id`
 
-#### Part 2: Matching Process
+##### Part 2: Matching Process
 10. Search for matching recipients in database where category matches and location is within allowed radius
 11. IF `candidates` list is empty THEN
 - 11.1. Queue `donation_id` for later matching attempts
@@ -95,7 +95,7 @@ This project aims to develop an efficient charity platform that uses the process
 - 12.6. Display message: "Match found! Waiting for recipient confirmation."
 13. ENDIF
 
-#### Part 3: Recipient Confirmation
+##### Part 3: Recipient Confirmation
 14. Wait for `recipient_response` (Accept or Decline) from notification link
 15. IF `recipient_response` = Accept THEN
 - 15.1. Verify that donation is still available and not expired
@@ -108,36 +108,58 @@ This project aims to develop an efficient charity platform that uses the process
 - 16.3. Return to Step 10 to search for a new match
 17. ENDIF
 
-#### Part 4: Handover and Completion
+##### Part 4: Handover and Completion
 18. When both donor and recipient confirm logistics, set donation status = `IN_TRANSIT` or `READY_FOR_PICKUP`
 19. After item is received, recipient confirms delivery via system
 20. Update donation status = `COMPLETED`
 21. Update match status = `COMPLETED`
 22. Prompt donor and recipient for feedback and store ratings
 23. Log event in system for analytics
-24. Display final message: "Donation successfully completed."
+24. END
+
+#### **Flow Chart**
+![](Donation_Flowchart.png)
 
 ### Design 2 Test Cases
-**Test Case 1**
+#### **Test Case 1**
 
-Test Case ID: A unique identifier for easy reference.
-Test Case Name: A short, descriptive title of what’s being tested.
-Preconditions: Any setup or initial conditions that must be met before testing begins.
+Test Case ID: TC001
+Test Case Name: Verify that a registered user can login successfully with correct credentials
+Preconditions: 
+- User account exists in the database
+- User is on the login page
 Test Steps:
-Clear, step-by-step instructions on how to execute the test.
-Expected Result: What should happen after performing the test steps.
-Actual Result: What actually happens during testing (filled out after execution).
-Pass/Fail: A simple indication of whether the test succeeded or failed.
-Priority: Helps categorise the importance of the test.
+1. Navigate to login page
+2. Enter valid email address in the email field
+3. Enter correct password in the password field
+4. Click the "Login" button
 
-**Test Case 2**
+Expected Result: 
+- System verifies credentials
+- User is redirected to the dashboard/home page
+- Session token is created and stored in cookies
 
-Test Case ID: A unique identifier for easy reference.
-Test Case Name: A short, descriptive title of what’s being tested.
-Preconditions: Any setup or initial conditions that must be met before testing begins.
+Priority: High
+
+#### **Test Case 2**
+
+Test Case ID: TC002
+Test Case Name: Verify that a donor’s item is matched with an eligible recipient based on category and location
+Preconditions:
+- Donor is logged in
+- At least one recipient with matching category and location exists in the database
+
 Test Steps:
-Clear, step-by-step instructions on how to execute the test.
-Expected Result: What should happen after performing the test steps.
-Actual Result: What actually happens during testing (filled out after execution).
-Pass/Fail: A simple indication of whether the test succeeded or failed.
-Priority: Helps categorise the importance of the test.
+1. Navigate to the donation form
+2. Enter all required fields (e.g., title: “Winter Jacket”, category: Clothing, condition: Good, quantity: 1, location: Sydney, availability dates, and an image(optional probably))
+3. Click “Submit Donation”
+4. Wait for system to run the matching process.
+
+Expected Result:
+- Donation is stored in the database with status = PENDING_MATCH
+- Matching process finds at least one recipient within the allowed radius
+- The highest-scoring match is selected
+- Recipient and donor both receive match notifications
+- Donation status updates to PENDING_CONFIRMATION
+
+Priority: Very high
