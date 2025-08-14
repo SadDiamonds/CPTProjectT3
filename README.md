@@ -169,3 +169,5 @@ Expected Result:
 - Donation status updates to PENDING_CONFIRMATION
 
 Priority: Very high
+
+![](hq720.png)
