@@ -29,15 +29,15 @@ This project aims to develop an efficient charity platform that uses the process
 
 **Home Page**
 
-![](Home.png)
+![](Images/Home.png)
 
 **Donate Page**
 
-![](Donate.png)
+![](Images/Donate.png)
 
 **Login Page**
 
-![](Login.png)
+![](Images/Login.png)
 
 
 ## **Week 3 - Alternate Designs**
@@ -45,10 +45,10 @@ This project aims to develop an efficient charity platform that uses the process
 | Aspect of Design | Description |
 |------------------|-------------|
 | Overall Theme | Warm, welcoming, and calming design with a blocky yet rounded font to create a sense of security. |
-| Home Page | Added extra navigation buttons at the top for easier navigation. Included a "stories" section for users to share their experiences. ![](Alt-Home.png) |
-| Donate Page | Simplified layout focusing on explaining the donation process. Introduced a universal yellow placeholder at the top across the website. ![](Alt-Donate.png) |
-| Login Page | Removed borders and enlarged the font for better accessibility. ![](Alt-Login.png) |
-| Flow Diagram | Visual representation of the user flow and background processes triggered by user actions. ![](Flow-Of-Data.png) |
+| Home Page | Added extra navigation buttons at the top for easier navigation. Included a "stories" section for users to share their experiences. ![](Images/Alt-Home.png) |
+| Donate Page | Simplified layout focusing on explaining the donation process. Introduced a universal yellow placeholder at the top across the website. ![](Images/Alt-Donate.png) |
+| Login Page | Removed borders and enlarged the font for better accessibility. ![](Images/Alt-Login.png) |
+| Flow Diagram | Visual representation of the user flow and background processes triggered by user actions. ![](Images/Flow-Of-Data.png) |
 
 ## **Week 4 - Designing Algorithms**
 
@@ -118,7 +118,7 @@ This project aims to develop an efficient charity platform that uses the process
 24. END
 
 #### **Flow Chart**
-![](Donation_Flowchart.png)
+![](Images/Donation_Flowchart.png)
 
 ### Design 2 Test Cases
 #### **Test Case 1**
@@ -170,7 +170,7 @@ Expected Result:
 
 Priority: Very high
 
-![BEACH VOLLYBREALLL](hq720.jpg)
+![BEACH VOLLYBREALLL](Images/hq720.jpg)
 
 ## **Week 5 - Setting up development**
 
