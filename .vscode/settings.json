@@ -1,0 +1,10 @@
+{
+  "sqlite3-editor.ui.conditionalFormatting": [
+    {
+      "database": "data_source.db",
+      "table": "copy",
+      "column": "password",
+      "equal": "uF1%RLLV"
+    }
+  ]
+}
