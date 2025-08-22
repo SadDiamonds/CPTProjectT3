@@ -71,3 +71,20 @@ GROUP BY
   r.need_description
 ORDER BY
   donations_received DESC;
+
+SELECT
+    r.recipient_id,
+    u.name AS recipient_name,
+    r.need_description,
+    COALESCE(m.donations_received, 0) AS donations_received
+FROM Recipients r
+LEFT JOIN Users u ON r.user_id = u.user_id
+LEFT JOIN (
+    SELECT recipient_id, COUNT(*) AS donations_received
+    FROM Matches
+    GROUP BY recipient_id
+) m ON r.user_id = m.recipient_id
+ORDER BY donations_received DESC;
+
+
+

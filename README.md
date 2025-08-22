@@ -308,3 +308,42 @@ ORDER BY
   d.date_donated DESC;
 ```
 ![](Images/SQL_Query3.png)
+
+4. This query lists all the donations that are `PENDING`, which can be changed to `CANCELED` or `DELIVERED`, it also shows who the donor is, their `donation_id` and their category and item. Also it orderes it by descending order of `date_donated`.
+
+```
+SELECT
+  d.donation_id,
+  u.name AS donor_name,
+  d.Items,
+  d.Category,
+  d.date_donated
+FROM
+  Donations d
+  JOIN Users u ON d.donor_id = u.user_id
+  LEFT JOIN Matches m ON d.donation_id = m.donation_id
+  AND m.status = 'Pending'
+ORDER BY
+  d.date_donated DESC;
+```
+
+![](Images/SQL_Query4.png)
+
+5. This shows the recipient name and their needs along with how many donations they recieved
+```
+SELECT
+    r.recipient_id,
+    u.name AS recipient_name,
+    r.need_description,
+    COALESCE(m.donations_received, 0) AS donations_received
+FROM Recipients r
+LEFT JOIN Users u ON r.user_id = u.user_id
+LEFT JOIN (
+    SELECT recipient_id, COUNT(*) AS donations_received
+    FROM Matches
+    GROUP BY recipient_id
+) m ON r.user_id = m.recipient_id
+ORDER BY donations_received DESC;
+```
+
+![](Images/SQL_Query6.png)
