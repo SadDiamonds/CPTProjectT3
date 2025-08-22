@@ -235,7 +235,7 @@ The following tables were created:
 ---
 
 ### Test Data
-Test data was used to verify the functionality of the database, it was generated used [Mockaroo](mockaroo.com) :
+Test data was used to verify the functionality of the database, it was generated using [Mockaroo](mockaroo.com) :
 
 **User Table**
 ![](Images/Users.png)
@@ -267,4 +267,44 @@ GROUP BY
 ORDER BY
   total_donations DESC;
 ```
+![](Images/SQL_Query2.png)
+
+2. Total number of matches per status, highest to lowest
+
+```
+SELECT
+  status,
+  COUNT(*) AS total_matches
+FROM
+  Matches
+GROUP BY
+  status
+ORDER BY
+  total_matches DESC;
+```
 ![](Images/SQL_Query1..png)
+
+3. To find how many items and what items a certain donor has donated, including the date, who the recipient is and the status of the match. In this example, it uses the User 'Norrie Rodenburg'.
+
+```
+SELECT
+  d.donation_id,
+  d.items,
+  d.category,
+  d.date_donated,
+  donor.name AS donor_name,
+  r.recipient_id,
+  rec_user.name AS recipient_name,
+  m.status
+FROM
+  Donations d
+  JOIN Users donor ON d.donor_id = donor.user_id
+  LEFT JOIN Matches m ON d.donor_id = m.donation_id
+  LEFT JOIN Recipients r ON m.recipient_id = r.user_id
+  LEFT JOIN Users rec_user ON r.user_id = rec_user.user_id
+WHERE
+  donor.name = 'Norrie Rodenburg'
+ORDER BY
+  d.date_donated DESC;
+```
+![](Images/SQL_Query3.png)
