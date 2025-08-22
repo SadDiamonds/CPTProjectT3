@@ -255,6 +255,7 @@ Test data was used to verify the functionality of the database, it was generated
 Here are some SQL queries that shows the important connections across the database:
 
 1. Total number of donations per category, highest to lowest
+
 `SELECT
   category,
   COUNT(*) AS total_donations
