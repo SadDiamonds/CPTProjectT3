@@ -356,4 +356,4 @@ ORDER BY donations_received DESC;
 
 ![](Images/SQL_Query6.png)
 
-## **Week 6 - HTML or something ==IN CONSTRUCTION==**
+## **Week 6 - HTML or something**
