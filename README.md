@@ -269,6 +269,8 @@ ORDER BY
 ```
 ![](Images/SQL_Query2.png)
 
+---
+
 2. Total number of matches per status, highest to lowest
 
 ```
@@ -283,6 +285,8 @@ ORDER BY
   total_matches DESC;
 ```
 ![](Images/SQL_Query1..png)
+
+---
 
 3. To find how many items and what items a certain donor has donated, including the date, who the recipient is and the status of the match. In this example, it uses the User 'Norrie Rodenburg'.
 
@@ -309,6 +313,8 @@ ORDER BY
 ```
 ![](Images/SQL_Query3.png)
 
+---
+
 4. This query lists all the donations that are `PENDING`, which can be changed to `CANCELED` or `DELIVERED`, it also shows who the donor is, their `donation_id` and their category and item. Also it orderes it by descending order of `date_donated`.
 
 ```
@@ -329,6 +335,8 @@ ORDER BY
 
 ![](Images/SQL_Query4.png)
 
+---
+
 5. This shows the recipient name and their needs along with how many donations they recieved
 ```
 SELECT
@@ -347,3 +355,5 @@ ORDER BY donations_received DESC;
 ```
 
 ![](Images/SQL_Query6.png)
+
+## **Week 6 - HTML or something ==IN CONSTRUCTION==**
