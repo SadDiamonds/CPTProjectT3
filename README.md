@@ -256,7 +256,7 @@ Here are some SQL queries that shows the important connections across the databa
 
 1. Total number of donations per category, highest to lowest
 
-`SELECT
+```SELECT
   category,
   COUNT(*) AS total_donations
 FROM
@@ -264,4 +264,4 @@ FROM
 GROUP BY
   category
 ORDER BY
-  total_donations DESC;`
+  total_donations DESC;
