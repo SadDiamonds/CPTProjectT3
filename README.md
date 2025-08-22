@@ -172,5 +172,6 @@ Priority: Very high
 
 ![BEACH VOLLYBREALLL](Images/hq720.jpg)
 
-## **Week 5 - Setting up development**
+## **Week 5 - Setting up development, SQL**
+
 

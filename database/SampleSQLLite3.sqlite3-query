@@ -1,0 +1,73 @@
+-- database: ./data_source.db
+-- Users Table
+-- This shows the total number of donations per category, ordered from highest to lowest.
+SELECT
+  category,
+  COUNT(*) AS total_donations
+FROM
+  Donations
+GROUP BY
+  category
+ORDER BY
+  total_donations DESC;
+
+-- This shows the total number of matches per status, ordered from highest to lowest.
+SELECT
+  status,
+  COUNT(*) AS total_matches
+FROM
+  Matches
+GROUP BY
+  status
+ORDER BY
+  total_matches DESC;
+
+SELECT
+  d.donation_id,
+  d.items,
+  d.category,
+  d.date_donated,
+  donor.name AS donor_name,
+  r.recipient_id,
+  rec_user.name AS recipient_name,
+  m.status
+FROM
+  Donations d
+  JOIN Users donor ON d.donor_id = donor.user_id
+  LEFT JOIN Matches m ON d.donor_id = m.donation_id
+  LEFT JOIN Recipients r ON m.recipient_id = r.user_id
+  LEFT JOIN Users rec_user ON r.user_id = rec_user.user_id
+WHERE
+  donor.name = 'Norrie Rodenburg'
+ORDER BY
+  d.date_donated DESC;
+
+SELECT
+  d.donation_id,
+  u.name AS donor_name,
+  d.Items,
+  d.Category,
+  d.date_donated
+FROM
+  Donations d
+  JOIN Users u ON d.donor_id = u.user_id
+  LEFT JOIN Matches m ON d.donation_id = m.donation_id
+  AND m.status = 'Pending'
+ORDER BY
+  d.date_donated DESC;
+
+SELECT
+  r.recipient_id,
+  u.name AS recipient_name,
+  r.need_description,
+  COUNT(m.donation_id) AS donations_received
+FROM
+  Recipients r
+  JOIN Users u ON r.user_id = u.user_id
+  LEFT JOIN Matches m ON r.user_id = m.recipient_id
+GROUP BY
+  r.recipient_id,
+  u.name,
+  r.need_description
+ORDER BY
+  donations_received DESC;
