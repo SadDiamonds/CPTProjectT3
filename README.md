@@ -174,4 +174,4 @@ Priority: Very high
 
 ## **Week 5 - Setting up development, SQL**
 
-
+### Creation of ~~Hatred~~ database
