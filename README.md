@@ -266,5 +266,5 @@ GROUP BY
   category
 ORDER BY
   total_donations DESC;
-
+```
 ![](Images/SQL_Query1..png)
