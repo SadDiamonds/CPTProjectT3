@@ -174,4 +174,93 @@ Priority: Very high
 
 ## **Week 5 - Setting up development, SQL**
 
-### Creation of ~~Hatred~~ database
+### **Development Environment Setup**
+1. Installed necessary extensions for web development:
+  - Required Extensions
+    - Render Line Ends
+    - Start git-bash
+    - SQLite3 Editor
+  - Extra Extensions
+    - Flake8
+    - Black Formatter
+    - Python
+    - Rainbow Indent
+    - Prettier VSCode
+2. Verified connectivity and if pip and the extensions worked
+
+### **Database Design**
+
+#### Tables
+The following tables were created:
+
+1. **Users**
+  - `user_id`(Primary key, UUID)
+  - `name` (Text)
+  - `email` (Text)
+  - `role` (Text)
+
+2. **Donations**
+  - `donation_id` (Primary key, Number)
+  - `donor_id` (Foreign key -> Users.user_id)
+  - `Category` (Text)
+  - `Items` (Text)
+  - `date_donated` (Text)
+
+3. **Recipient**
+  - `recipient_id` (Primary key, Number)
+  - `user_id` (Foreign key -> Users.user_id)
+  - `need_description` (Text)
+
+4. **Matches**
+  - `match_id` (Primary key, Number)
+  - `donation_id` (Foreign key -> Donations.donor_id)
+  - `recipient_id` (Foreign key -> Recipient.user_id)
+  - `status` (Text)
+
+---
+
+#### Relationships
+- One **User** can make multiple **Donations**.
+- One **Donation** can be matched to one or multiple **Recipients** through **Matches**.
+- Foreign keys ensure data integrity across tables.
+
+---
+
+#### Data Types
+- **Text** -> Names, categories, roles, item descriptions
+- **Date** -> Dates of donations
+- **UUID** -> Unique identifiers for users
+- **Status** -> Strings representing progress (Pending, Progress, Canceled)
+
+---
+
+### Test Data
+Test data was used to verify the functionality of the database, it was generated used [Mockaroo](mockaroo.com) :
+
+**User Table**
+![](Images/Users.png)
+
+**Donation Table**
+![](Images/Donations.png)
+
+**Recipient Table**
+![](Images/Recipients.png)
+
+**Match Table**
+![](Images/Matches.png)
+
+---
+
+### SQL Queries
+Here are some SQL queries that shows the important connections across the database:
+
+1. Total number of donations per category, highest to lowest
+`SELECT
+  category,
+  COUNT(*) AS total_donations
+FROM
+  Donations
+GROUP BY
+  category
+ORDER BY
+  total_donations DESC;`
