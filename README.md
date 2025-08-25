@@ -29,15 +29,15 @@ This project aims to develop an efficient charity platform that uses the process
 
 **Home Page**
 
-![](Images/Home.png)
+![](static/Images/Home.png)
 
 **Donate Page**
 
-![](Images/Donate.png)
+![](static/Images/Donate.png)
 
 **Login Page**
 
-![](Images/Login.png)
+![](static/Images/Login.png)
 
 
 ## **Week 3 - Alternate Designs**
@@ -45,10 +45,10 @@ This project aims to develop an efficient charity platform that uses the process
 | Aspect of Design | Description |
 |------------------|-------------|
 | Overall Theme | Warm, welcoming, and calming design with a blocky yet rounded font to create a sense of security. |
-| Home Page | Added extra navigation buttons at the top for easier navigation. Included a "stories" section for users to share their experiences. ![](Images/Alt-Home.png) |
-| Donate Page | Simplified layout focusing on explaining the donation process. Introduced a universal yellow placeholder at the top across the website. ![](Images/Alt-Donate.png) |
-| Login Page | Removed borders and enlarged the font for better accessibility. ![](Images/Alt-Login.png) |
-| Flow Diagram | Visual representation of the user flow and background processes triggered by user actions. ![](Images/Flow-Of-Data.png) |
+| Home Page | Added extra navigation buttons at the top for easier navigation. Included a "stories" section for users to share their experiences. ![](static/Images/Alt-Home.png) |
+| Donate Page | Simplified layout focusing on explaining the donation process. Introduced a universal yellow placeholder at the top across the website. ![](static/Images/Alt-Donate.png) |
+| Login Page | Removed borders and enlarged the font for better accessibility. ![](static/Images/Alt-Login.png) |
+| Flow Diagram | Visual representation of the user flow and background processes triggered by user actions. ![](static/Images/Flow-Of-Data.png) |
 
 ## **Week 4 - Designing Algorithms**
 
@@ -118,7 +118,7 @@ This project aims to develop an efficient charity platform that uses the process
 24. END
 
 #### **Flow Chart**
-![](Images/Donation_Flowchart.png)
+![](static/Images/Donation_Flowchart.png)
 
 ### Design 2 Test Cases
 #### **Test Case 1**
@@ -170,7 +170,7 @@ Expected Result:
 
 Priority: Very high
 
-![BEACH VOLLYBREALLL](Images/hq720.jpg)
+![BEACH VOLLYBREALLL](static/Images/hq720.jpg)
 
 ## **Week 5 - Setting up development, SQL**
 
@@ -238,16 +238,16 @@ The following tables were created:
 Test data was used to verify the functionality of the database, it was generated using [Mockaroo](mockaroo.com) :
 
 **User Table**
-![](Images/Users.png)
+![](static/Images/Users.png)
 
 **Donation Table**
-![](Images/Donations.png)
+![](static/Images/Donations.png)
 
 **Recipient Table**
-![](Images/Recipients.png)
+![](static/Images/Recipients.png)
 
 **Match Table**
-![](Images/Matches.png)
+![](static/Images/Matches.png)
 
 ---
 
@@ -267,7 +267,7 @@ GROUP BY
 ORDER BY
   total_donations DESC;
 ```
-![](Images/SQL_Query2.png)
+![](static/Images/SQL_Query2.png)
 
 ---
 
@@ -284,7 +284,7 @@ GROUP BY
 ORDER BY
   total_matches DESC;
 ```
-![](Images/SQL_Query1..png)
+![](static/Images/SQL_Query1..png)
 
 ---
 
@@ -311,7 +311,7 @@ WHERE
 ORDER BY
   d.date_donated DESC;
 ```
-![](Images/SQL_Query3.png)
+![](static/Images/SQL_Query3.png)
 
 ---
 
@@ -333,7 +333,7 @@ ORDER BY
   d.date_donated DESC;
 ```
 
-![](Images/SQL_Query4.png)
+![](static/Images/SQL_Query4.png)
 
 ---
 
@@ -354,6 +354,6 @@ LEFT JOIN (
 ORDER BY donations_received DESC;
 ```
 
-![](Images/SQL_Query6.png)
+![](static/Images/SQL_Query6.png)
 
 ## **Week 6 - HTML or something**
