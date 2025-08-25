@@ -1,9 +1,8 @@
 <nav>
-  <img src="static\images\logo.png" alt="VSCode Extensions site logo." />
-  <h1>VSCode Extensions</h1>
-  <ul class="topnav">
-    <li><a href="#">Home</a></li>
-    <li><a href="add.html">Add me</a></li>
-    <li><a href="about.html">About</a></li>
+  <h1>Gratia</h1>
+  <ul>
+    <li><a href="{{ url_for('index') }}">Home</a></li>
+    <li><a href="{{ url_for('about') }}">About</a></li>
+    <li><a href="{{ url_for('add') }}">Add Donation</a></li>
   </ul>
 </nav>

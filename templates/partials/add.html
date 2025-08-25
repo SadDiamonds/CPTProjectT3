@@ -1,0 +1,18 @@
+{% extends 'partials/layout.html' %}
+{% block title %}Add Donation - Gratia{% endblock %}
+
+{% block content %}
+<h1>Add a Donation</h1>
+<form action="{{ url_for('add') }}" method="POST">
+  <label for="item">Item:</label>
+  <input type="text" name="item" id="item" required>
+
+  <label for="category">Category:</label>
+  <input type="text" name="category" id="category" required>
+
+  <label for="date">Date Donated:</label>
+  <input type="date" name="date" id="date" required>
+
+  <button type="submit" class="btn">Add Donation</button>
+</form>
+{% endblock %}

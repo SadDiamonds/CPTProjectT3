@@ -1,18 +1,23 @@
-{% extends 'layout.html' %} {% block content %}
-<div class="container"></div>
-{% endblock %}
+{% extends 'layout.html' %}
+{% block title %}Home - Gratia{% endblock %}
 
-{% for row in content %}
-<div class="card">
-  <img
-    class="card-image"
-    src="{{ row[4] }}"
-    alt="Product image for the {{ row[1] }} VSCode extension."
-  />
-  <h1 class="card-name">{{ row[1] }}</h1>
-  <p class="card-about">{{ row[3] }}</p>
-  <a class="card-link" href="{{ row[2] }}"
-    ><button class="btn">Read More</button></a
-  >
+{% block content %}
+<h1>Welcome to Gratia</h1>
+<div class="container">
+  <div class="card">
+    <div class="card-name">Recent Donations</div>
+    <p class="card-about">View the latest contributions from donors.</p>
+    <button class="btn">See Donations</button>
+  </div>
+  <div class="card">
+    <div class="card-name">Find Matches</div>
+    <p class="card-about">Connect donations with recipients in need.</p>
+    <button class="btn">Find Matches</button>
+  </div>
+  <div class="card">
+    <div class="card-name">Add a Donation</div>
+    <p class="card-about">Submit items you’d like to donate.</p>
+    <button class="btn" onclick="location.href='{{ url_for('add') }}'">Add Donation</button>
+  </div>
 </div>
-{% endfor %}
+{% endblock %}
