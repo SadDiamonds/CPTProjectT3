@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<main class="auth-container">
+  <h1>Create Account</h1>
+  <form action="{{ url_for('signup_page') }}" method="post" class="auth-form">
+    <label for="name">Full Name</label>
+    <input type="text" id="name" name="name" placeholder="Your full name" required>
+
+    <label for="email">Email</label>
+    <input 
+      type="email" 
+      id="email" 
+      name="email" 
+      placeholder="Enter your email" 
+      required
+    >
+
+    <label for="password">Password</label>
+    <input 
+      type="password" 
+      id="password" 
+      name="password" 
+      placeholder="Enter your password" 
+      required
+      pattern='^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$'
+      title="Password must be at least 8 characters, include an uppercase letter and a symbol."
+    >
+
+    <button type="submit" class="btn">Sign Up</button>
+
+    <p class="auth-link">
+      Already have an account? <a href="{{ url_for('signin_page') }}">Sign In</a>
+    </p>
+  </form>
+</main>
+{% endblock %}

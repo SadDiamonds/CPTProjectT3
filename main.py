@@ -1,48 +1,75 @@
-from flask import Flask
-from flask import render_template
-from flask import request
-from flask import redirect
-import sqlite3 as sql
-import database_manager as dbHandler
+from flask import Flask, render_template, request, redirect, url_for, flash
+import re
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey"  # required for flash
+
+# ----------------- ROUTES -----------------
 
 
-@app.route("/index.html", methods=["GET"])
-@app.route("/", methods=["POST", "GET"])
+@app.route("/")
 def index():
-    data = dbHandler.listExtension()
-    return render_template("index.html", content=data)
+    return render_template("index.html")
 
 
 @app.route("/about")
 def about():
-    return render_template("about.html")
+    return render_template("partials/about.html")
+
+
+@app.route("/menu")
+def menu():
+    return render_template("partials/menu.html")
 
 
 @app.route("/add")
-def contact():
-    return render_template("add.html")
+def add():
+    return render_template("partials/add.html")
 
+
+# ----------------- SIGNUP -----------------
+@app.route("/signup", methods=["GET", "POST"])
+def signup_page():
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        # Validate email
+        if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email):
+            flash("❌ Invalid email address.", "error")
+            return redirect(url_for("signup_page"))
+
+        # Validate password: 8+ chars, 1 uppercase, 1 symbol
+        if not re.fullmatch(
+            r'^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$', password
+        ):
+            flash(
+                "❌ Password must be at least 8 chars, include an uppercase and a symbol.",
+                "error",
+            )
+            return redirect(url_for("signup_page"))
+
+        # TODO: Save user to database here
+        flash("✅ Account created successfully!", "success")
+        return redirect(url_for("signin_page"))
+
+    return render_template("partials/signup.html")
+
+
+# ----------------- SIGNIN -----------------
+@app.route("/signin", methods=["GET", "POST"])
+def signin_page():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        # TODO: Check user credentials against database
+        # For now just flash success
+        flash("✅ Signed in successfully!", "success")
+        return redirect(url_for("index"))
+
+    return render_template("partials/signin.html")
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
-
-
-@app.route("/add", methods=["GET", "POST"])
-def add():
-    if request.method == "POST":
-        name = request.form["name"]
-        link = request.form["hyperlink"]
-        about = request.form["about"]
-        # extend for your schema if needed (image, language, etc)
-        con = sql.connect("database/data_source.db")
-        cur = con.cursor()
-        cur.execute(
-            "INSERT INTO extension (name, hyperlink, about, image, language) VALUES (?, ?, ?, ?, ?)",
-            (name, link, about, "https://via.placeholder.com/300", "Custom"),
-        )
-        con.commit()
-        con.close()
-        return redirect("/")
-    return render_template("add.html")
+    app.run(debug=True)

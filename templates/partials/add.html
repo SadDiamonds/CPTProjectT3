@@ -1,18 +1,37 @@
-{% extends 'partials/layout.html' %}
+{% extends "layout.html" %}
+
 {% block title %}Add Donation - Gratia{% endblock %}
 
 {% block content %}
 <h1>Add a Donation</h1>
-<form action="{{ url_for('add') }}" method="POST">
-  <label for="item">Item:</label>
-  <input type="text" name="item" id="item" required>
 
-  <label for="category">Category:</label>
-  <input type="text" name="category" id="category" required>
+<div class="about-container">
+  <p><center>Fill out the form below to add a new donation to our platform.<center></p>
+</div>
 
-  <label for="date">Date Donated:</label>
-  <input type="date" name="date" id="date" required>
+<form method="POST" action="/add">
+  <div>
+    <label for="donor">Donor Name:</label><br>
+    <input type="text" id="donor" name="donor" required>
+  </div>
 
-  <button type="submit" class="btn">Add Donation</button>
+  <div>
+    <label for="item">Item:</label><br>
+    <input type="text" id="item" name="item" required>
+  </div>
+
+  <div>
+    <label for="category">Category:</label><br>
+    <input type="text" id="category" name="category" required>
+  </div>
+
+  <div>
+    <label for="date">Date:</label><br>
+    <input type="date" id="date" name="date" required>
+  </div>
+
+  <div style="margin-top: 1rem;">
+    <button type="submit" class="btn">Submit Donation</button>
+  </div>
 </form>
 {% endblock %}

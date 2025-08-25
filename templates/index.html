@@ -1,23 +1,34 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
+
 {% block title %}Home - Gratia{% endblock %}
 
 {% block content %}
 <h1>Welcome to Gratia</h1>
+<p>Your platform to connect donors with recipients.</p>
+
 <div class="container">
+  <!-- Card 1 -->
   <div class="card">
+    <img src="static/Images/placeholder.png" class="card-image" alt="Donation 1">
     <div class="card-name">Recent Donations</div>
-    <p class="card-about">View the latest contributions from donors.</p>
-    <button class="btn">See Donations</button>
+    <p class="card-about">Lorem ipsum</p>
+    <button class="btn">View Donations</button>
   </div>
+
+  <!-- Card 2 -->
   <div class="card">
-    <div class="card-name">Find Matches</div>
-    <p class="card-about">Connect donations with recipients in need.</p>
-    <button class="btn">Find Matches</button>
+    <img src="static/Images/placeholder.png" class="card-image" alt="Donation 2">
+    <div class="card-name">Our Mission</div>
+    <p class="card-about">Lorem ipsum</p>
+    <button class="btn">Learn More</button>
   </div>
+
+  <!-- Card 3 -->
   <div class="card">
-    <div class="card-name">Add a Donation</div>
-    <p class="card-about">Submit items you’d like to donate.</p>
-    <button class="btn" onclick="location.href='{{ url_for('add') }}'">Add Donation</button>
+    <img src="static/Images/placeholder.png" class="card-image" alt="Donation 3">
+    <div class="card-name">Get Involved</div>
+    <p class="card-about">lorem ipsum</p>
+    <button class="btn">Join Now</button>
   </div>
 </div>
 {% endblock %}

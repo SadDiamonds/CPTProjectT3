@@ -7,16 +7,31 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
+
+  <!-- Navigation -->
   {% include 'partials/menu.html' %}
 
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main content -->
   <main>
     {% block content %}{% endblock %}
   </main>
 
-  <footer>
+  <!-- Footer -->
+  <footer style="text-align:center; margin:2rem 0; color:#555;">
     <p>&copy; 2025 Gratia Donations</p>
   </footer>
 
+  <!-- Optional JS -->
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
