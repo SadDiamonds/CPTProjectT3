@@ -28,6 +28,10 @@ main {
   text-align: center;
 }
 
+span {
+  margin-left: 25em;
+}
+
 /* -------------------- Navigation -------------------- */
 nav {
   position:sticky;
@@ -35,9 +39,9 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.5rem;
+  padding-right:4rem;
   background-color: #FFE7A9;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
   margin-bottom: 2rem;
@@ -167,6 +171,10 @@ nav ul li a:focus {
   padding: 0 1rem;
 }
 
+.how-it-works {
+  background-color:#FFE7A9;
+}
+
 /* -------------------- Forms -------------------- */
 form {
   display: flex;
@@ -276,4 +284,55 @@ form textarea {
 
 .auth-link a:hover {
   text-decoration: underline;
+}
+
+.landing {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.cta-buttons {
+  margin-top: 1rem;
+}
+
+.cta-buttons .btn {
+  margin: 0 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+.how-it-works {
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.how-it-works .steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.how-it-works .step {
+  flex: 1 1 200px;
+  max-width: 300px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.contact {
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.contact ul {
+  list-style: none;
+  padding: 0;
+}
+
+.contact li {
+  margin: 0.25rem 0;
 }

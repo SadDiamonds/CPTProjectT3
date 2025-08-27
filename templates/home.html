@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<main>
+  <h1>Recent Donations</h1>
+  <div class="container">
+    {% for donation in donations %}
+      <div class="card">
+        <img src="{{ donation.image_url or '/static/default.jpg' }}" class="card-image">
+          <h2 class="card-name">{{ donation.category }}</h2>
+          <p class="card-about">{{ donation.items }}</p>
+          <p><small>Donated on {{ donation.date_donated }}</small></p>
+      </div>
+    {% else %}
+      <p>No donations yet.</p>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

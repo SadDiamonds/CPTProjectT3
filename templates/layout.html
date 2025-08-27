@@ -2,15 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Gratia{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
+  <nav>
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo">
+    <ul>
+      <li><a href="{{ url_for('landing_page') }}">Home</a></li>
+      <li><a href="{{ url_for('about') }}">About</a></li>
+      {% if user %}
+        <li><a href="{{ url_for('home_page')}}">Home</a></li>
+        <li><a href="{{ url_for('add') }}">Add Donation</a></li>
+        <li><a href="{{ url_for('matches') }}">Matches</a></li>
+        <li><a href="{{ url_for('signout') }}">Sign Out</a></li>
+      {% else %}
+        <li><a href="{{ url_for('signin_page') }}">Sign In</a></li>
+        <li><a href="{{ url_for('signup_page') }}">Sign Up</a></li>
+      {% endif %}
+    </ul>
+  </nav>
 
-  <!-- Navigation -->
-  {% include 'partials/menu.html' %}
-
+  <!-- Flash messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="flash-messages">
@@ -21,17 +34,6 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Main content -->
-  <main>
-    {% block content %}{% endblock %}
-  </main>
-
-  <!-- Footer -->
-  <footer style="text-align:center; margin:2rem 0; color:#555;">
-    <p>&copy; 2025 Gratia Donations</p>
-  </footer>
-
-  <!-- Optional JS -->
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block content %}{% endblock %}
 </body>
 </html>

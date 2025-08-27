@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<section class="landing">
+    <center>
+        <h1 style="font-size:50px">Welcome to Gratia</h1>
+        <Br><br><br><br>
+        <p style="padding-left:100px; padding-right:100px">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum<br><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+    </center>
+    
+    <br><br>
+
+    <div class="cta-buttons"><center>
+        <a href="{{ url_for('signin_page') }}" class="btn" style="text-decoration:none;">Sign In</a>
+        <span></span>
+        <a href="{{ url_for('signup_page') }}" class="btn" style="text-decoration:none;">Sign Up</a>
+    </center></div>
+
+    <br><br><br><br>
+
+    <section class="how-it-works">
+        <center>
+            <br>
+            <h2 style="font-size:35px">How It Works</h2>
+            <br>
+            <div class="steps">
+                <div class="step">
+                    <h3>1. Donate</h3>
+                    <p>Donors list items they want to give away using our platform.</p>
+                </div>
+                <br>
+                <div class="step">
+                    <h3>2. Match</h3>
+                    <p>Our system automatically matches donations with recipients in need.</p>
+                </div>
+                <br>
+                <div class="step">
+                    <h3>3. Deliver</h3>
+                    <p>Recipients gets notified and the Donors and recipients coordinate to complete the donation process.</p>
+                </div> 
+                <br>
+            </div>
+            <br>
+        </center>
+    </section>
+
+    <br><br><br><br><br>
+
+    <section class="contact">
+        <h2 style="font-size:35px">Contact Us</h2>
+        <br>
+        <p>If you have any questions, feel free to reach out to us at:</p>
+        <ul>
+            <li>Email: something@something.org</li>
+            <li>Phone: (123) 456-7890</li>
+            <li>Address: 12345</li>
+        </ul>
+    </section>
+</section>
+{% endblock %}
