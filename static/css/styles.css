@@ -332,8 +332,23 @@ form textarea {
 }
 
 .password-checklist {
-  margin-top: 0.5rem; 
-  font-size:0.9rem;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fafafa;
+  border: 1px solid #ececec;
+  transition: opacity 0.18s ease, max-height 0.18s ease;
+  max-height: 220px;
+  opacity: 1;
+}
+
+.password-checklist.hidden {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  border: none;
 }
 
 .password-checklist ul {
@@ -373,7 +388,7 @@ form textarea {
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0rem;
   box-sizing: border-box;
 }
 
@@ -391,14 +406,6 @@ form textarea {
   transition: max-height 0.5s ease, opacity 0.5s ease;
 }
 
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  max-width: 400px;
-  margin: auto;
-}
-
 .form-step {
   max-height: 0;
   overflow: hidden;
@@ -407,32 +414,22 @@ form textarea {
   margin-bottom: 0;
 }
 
-.form-step.step-active {
-  max-height: 500px; /* enough to show content */
-  opacity: 1;
-  margin-bottom: 1.5rem;
+.hidden {
+    display: none;
+  }
+
+.fade-down {
+  animation: fadeDown 0.4s ease forwards;
 }
 
-.form-step label {
-  display: block;
-  margin-bottom: 0.3rem;
-  font-weight: 600;
-}
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 
-.form-step input,
-.form-step select {
-  width: 100%;
-  padding: 0.6rem 0.8rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-  box-sizing: border-box;
-}
-
-.form-step input:focus,
-.form-step select:focus {
-  outline: none;
-  border-color: hsl(141, 100%, 22%);
-  box-shadow: 0 0 5px rgba(20, 230, 221, 0.4);
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

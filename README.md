@@ -356,4 +356,5 @@ ORDER BY donations_received DESC;
 
 ![](static/Images/SQL_Query6.png)
 
-## **Week 6 - HTML or something**
+## **Week 6-7 - HTML SQL PYTHON CSS JAVASCRIPT HAHAHAHAHAHA**
+I insane
