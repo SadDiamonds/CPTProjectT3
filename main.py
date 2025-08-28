@@ -2,8 +2,14 @@ import sqlite3
 import uuid
 import hashlib
 import re
-from flask import Flask, render_template, request, redirect, url_for, flash, g, session
+import os
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, render_template, request, redirect, url_for, flash, g, session, current_app
 from datetime import datetime
+from functools import wraps
+
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -12,6 +18,7 @@ DATABASE = "database/data_source.db"
 
 
 # ----------------- DB CONNECTION -----------------
+
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
@@ -28,6 +35,9 @@ def close_connection(exception):
 
 
 # ----------------- UTILS -----------------
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -41,21 +51,51 @@ def current_user():
     return None
 
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please sign in first.", "warning")
+            return redirect(url_for("signin_page"))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+def opp_login_required(f):
+  @wraps(f)
+  def decorated_function(*args, **kwargs):
+    if "user_id" in session:
+      return redirect(url_for('home_page'))
+    return f(*args, **kwargs)
+  return decorated_function
 # ----------------- ROUTES -----------------
 
 
 @app.route("/")
+@opp_login_required
 def landing_page():
     return render_template("landing.html")
 
 
 @app.route("/home")
+@login_required
 def home_page():
     db = get_db()
-    donations = db.execute(
-        "SELECT donation_id, category, items, date_donated FROM Donations ORDER BY date_donated DESC LIMIT 3"
-    ).fetchall()
-    return render_template("home.html", donations=donations)
+    user = db.execute(
+        "SELECT * FROM Users WHERE user_id = ?", (session["user_id"],)
+    ).fetchone()
+
+    if user["role"] == "Donor":
+        donations = db.execute(
+            "SELECT * FROM Donations WHERE donor_id = ? ORDER BY date_donated DESC LIMIT 3",
+            (user["user_id"],),
+        ).fetchall()
+    else:  # recipient
+        donations = db.execute(
+            "SELECT * FROM Donations WHERE donation_id NOT IN (SELECT donation_id FROM Matches WHERE recipient_id = ?) ORDER BY date_donated DESC LIMIT 3",
+            (user["user_id"],),
+        ).fetchall()
+    return render_template("home.html", user=user, donations=donations)
 
 
 @app.route("/about")
@@ -70,6 +110,13 @@ def signup_page():
         name = request.form.get("name")
         email = request.form.get("email")
         password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        role = request.form.get("role")
+
+        # Confirm passwords match
+        if password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return redirect(url_for("signup_page"))
 
         # Validate email
         if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email):
@@ -86,18 +133,20 @@ def signup_page():
             )
             return redirect(url_for("signup_page"))
 
-        db = get_db()
+        hashed = generate_password_hash(password)
         user_id = str(uuid.uuid4())
-        hashed = hash_password(password)
+        creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        db = get_db()
 
         try:
             db.execute(
-                "INSERT INTO Users (user_id, name, email, password, creation_date, role) VALUES (?, ?, ?, ?, ?, ?)",
-                (user_id, name, email, hashed, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "none"),
+                "INSERT INTO Users (user_id, name, email, password, role, creation_date) VALUES (?, ?, ?, ?, ?, ?)",
+                (user_id, name, email, hashed, role, creation_date),
             )
             db.commit()
         except sqlite3.IntegrityError:
-            flash("Email already exists", "error")
+            flash("Email already exists.", "error")
             return redirect(url_for("signup_page"))
 
         flash("Account created! Please sign in.", "success")
@@ -112,14 +161,13 @@ def signin_page():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
-        hashed = hash_password(password)
 
         db = get_db()
         user = db.execute(
-            "SELECT * FROM Users WHERE email=? AND password=?", (email, hashed)
+            "SELECT * FROM Users WHERE email=?", (email,)
         ).fetchone()
 
-        if user:
+        if user and check_password_hash(user["password"], password):
             session["user_id"] = user["user_id"]
             flash(f"Welcome back, {user['name']}!", "success")
             return redirect(url_for("home_page"))
@@ -133,28 +181,36 @@ def signin_page():
 # ----------------- SIGN OUT -----------------
 @app.route("/signout")
 def signout():
-    session.pop("user_id", None)
-    flash("Signed out successfully.", "success")
-    return redirect(url_for("signin_page"))
+    session.clear()
+    flash("You have been signed out.", "info")
+    return redirect(url_for("landing_page"))
 
 
 # ----------------- ADD DONATION -----------------
 @app.route("/add", methods=["GET", "POST"])
+@login_required
 def add():
-    user = current_user()
-    if not user:
-        flash("Please sign in to add a donation.", "error")
-        return redirect(url_for("signin_page"))
+    user = current_user()  # get logged in user info
 
     if request.method == "POST":
         items = request.form.get("items")
         category = request.form.get("category")
-        date_donated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # current timestamp
+        date_donated = datetime.now().strftime("%d/%m/%y %H:%M")
+
+        # Handle image
+        image_file = request.files.get("image")
+        image_filename = None
+        if image_file and allowed_file(image_file.filename):
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join(current_app.root_path, "static/uploads", filename)
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            image_file.save(image_path)
+            image_filename = f"uploads/{filename}"  # relative to /static
 
         db = get_db()
         db.execute(
-            "INSERT INTO Donations (donor_id, category, items, date_donated) VALUES (?, ?, ?, ?)",
-            (user["user_id"], category, items, date_donated),
+            "INSERT INTO Donations (donor_id, category, items, date_donated, image_url) VALUES (?, ?, ?, ?, ?)",
+            (user["user_id"], category, items, date_donated, image_filename),
         )
         db.commit()
         flash("Donation added!", "success")
@@ -174,7 +230,7 @@ def matches():
     db = get_db()
     matches = db.execute(
         """
-        SELECT m.match_id, d.items, d.category, r.name as recipient_name, m.status
+        SELECT m.match_id, d.items, d.category, u.name as recipient_name, m.status
         FROM Matches m
         JOIN Donations d ON m.donation_id = d.donation_id
         JOIN Recipients r ON m.recipient_id = r.recipient_id
@@ -183,6 +239,11 @@ def matches():
     ).fetchall()
 
     return render_template("partials/matches.html", matches=matches, user=user)
+
+
+@app.context_processor
+def inject_user():
+    return dict(user=session.get("user_id"))
 
 
 # ----------------- RUN APP -----------------

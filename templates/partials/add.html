@@ -5,14 +5,18 @@
 {% block content %}
 <main class="auth-container">
   <h1>Add Donation</h1>
-  <form action="{{ url_for('add') }}" method="post" class="auth-form">
+  <form action="{{ url_for('add') }}" method="post" enctype="multipart/form-data" class="auth-form">
     <label for="items">Items</label>
     <input type="text" name="items" id="items" placeholder="Donation items" required>
 
     <label for="category">Category</label>
     <input type="text" name="category" id="category" placeholder="Category" required>
 
+    <label for="image">Image</label>
+    <input type="file" name="image" id="image" accept="image/*">
+
     <button type="submit" class="btn">Add Donation</button>
-</form>
+  </form>
+
 </main>
 {% endblock %}
