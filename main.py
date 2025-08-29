@@ -87,12 +87,12 @@ def home_page():
 
     if user["role"] == "Donor":
         donations = db.execute(
-            "SELECT * FROM Donations WHERE donor_id = ? ORDER BY date_donated DESC LIMIT 3",
+            "SELECT * FROM Donations WHERE donor_id = ? ORDER BY donation_id DESC LIMIT 6",
             (user["user_id"],),
         ).fetchall()
     else:  # recipient
         donations = db.execute(
-            "SELECT * FROM Donations WHERE donation_id NOT IN (SELECT donation_id FROM Matches WHERE recipient_id = ?) ORDER BY date_donated DESC LIMIT 3",
+            "SELECT * FROM Donations WHERE donation_id NOT IN (SELECT donation_id FROM Matches WHERE recipient_id = ?) ORDER BY donation_id DESC LIMIT 6",
             (user["user_id"],),
         ).fetchall()
     return render_template("home.html", user=user, donations=donations)
@@ -135,7 +135,7 @@ def signup_page():
 
         hashed = generate_password_hash(password)
         user_id = str(uuid.uuid4())
-        creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        creation_date = datetime.now().strftime("%d/%m/%y %H:%M:%S")
 
         db = get_db()
 

@@ -9,8 +9,8 @@
     {% for donation in donations %}
       <div class="card">
           <img src="{{ url_for('static', filename=donation.image_url or 'default.jpg') }}" class="card-image">
-          <h2 class="card-name">{{ donation.category }}</h2>
-          <p class="card-about">{{ donation.items }}</p>
+          <h2 class="card-name">{{ donation.items }}</h2>
+          <p class="card-about">{{ donation.category }}</p>
           <p><small>Donated on {{ donation.date_donated }}</small></p>
       </div>
     {% else %}
