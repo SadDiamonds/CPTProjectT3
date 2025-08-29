@@ -8,12 +8,20 @@
   <form action="{{ url_for('add') }}" method="post" enctype="multipart/form-data" class="auth-form">
     <label for="items">Items</label>
     <input type="text" name="items" id="items" placeholder="Donation items" required>
-
+    
     <label for="category">Category</label>
-    <input type="text" name="category" id="category" placeholder="Category" required>
+    <select name="category" required>
+      <option value="" disabled selected>What category?</option>
+      <option value="Education">Education</option>
+      <option value="Food">Food</option>
+      <option value="Clothing">Clothing</option>
+      <option value="Tech">Tech</option>
+      <option value="Medication">Medication</option>
+      <option value="Furniture">Furniture</option>
+    </select>
 
     <label for="image">Image</label>
-    <input type="file" name="image" id="image" accept="image/*">
+    <input type="file" name="image" id="image" accept="image/*" required>
 
     <button type="submit" class="btn">Add Donation</button>
   </form>
