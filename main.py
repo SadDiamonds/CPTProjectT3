@@ -86,15 +86,18 @@ def home_page():
     ).fetchone()
 
     if user["role"] == "Donor":
+        # Donor sees their own donations
         donations = db.execute(
-            "SELECT * FROM Donations WHERE donor_id = ? ORDER BY donation_id DESC LIMIT 6",
+            "SELECT * FROM Donations WHERE donor_id = ? ORDER BY donation_id DESC",
             (user["user_id"],),
         ).fetchall()
-    else:  # recipient
+    elif user["role"] == "Recipient":  # recipient
+        # Recipient sees all donations they haven’t matched with
         donations = db.execute(
-            "SELECT * FROM Donations WHERE donation_id NOT IN (SELECT donation_id FROM Matches WHERE recipient_id = ?) ORDER BY donation_id DESC LIMIT 6",
+            "SELECT * FROM Donations WHERE donation_id NOT IN (SELECT donation_id FROM Matches_ex WHERE recipient_id = ?) ORDER BY donation_id DESC LIMIT 6",
             (user["user_id"],),
         ).fetchall()
+
     return render_template("home.html", user=user, donations=donations)
 
 
@@ -220,30 +223,106 @@ def add():
 
 
 # ----------------- VIEW MATCHES -----------------
-@app.route("/matches")
+@app.route("/matches", methods=["GET", "POST"])
+@login_required
 def matches():
     user = current_user()
-    if not user:
-        flash("Please sign in to view matches.", "error")
-        return redirect(url_for("signin_page"))
 
     db = get_db()
-    matches = db.execute(
-        """
-        SELECT m.match_id, d.items, d.category, u.name as recipient_name, m.status
-        FROM Matches m
-        JOIN Donations d ON m.donation_id = d.donation_id
-        JOIN Recipients r ON m.recipient_id = r.recipient_id
-        WHERE m.status='Pending'
-    """
-    ).fetchall()
+
+    if user["role"] == "Donor":
+        # Donor sees all requests for their donations
+        matches = db.execute(
+            """
+            SELECT m.match_id, d.items, d.category, d.image_url, u.name as recipient_name, m.status
+            FROM Matches_ex m
+            JOIN Donations d ON m.donation_id = d.donation_id
+            JOIN Users u ON m.recipient_id = u.user_id
+            WHERE m.donor_id = ?
+            """,
+            (user["user_id"],),
+        ).fetchall()
+
+    else:
+        # Recipient sees their requests
+        matches = db.execute(
+            """
+            SELECT m.match_id, d.items, d.category, d.image_url, u.name as donor_name, m.status
+            FROM Matches_ex m
+            JOIN Donations d ON m.donation_id = d.donation_id
+            JOIN Users u ON m.donor_id = u.user_id
+            WHERE m.recipient_id = ?
+            """,
+            (user["user_id"],),
+        ).fetchall()
 
     return render_template("partials/matches.html", matches=matches, user=user)
 
 
-@app.context_processor
-def inject_user():
-    return dict(user=session.get("user_id"))
+# ----------------- Claim Donation -----------------
+@app.route("/claim/<int:donation_id>", methods=["POST"])
+@login_required
+def claim_donation(donation_id):
+    user = current_user()
+
+    # Only recipients can claim
+    if user["role"] != "Recipient":
+        flash("Only recipients can claim donations.", "error")
+        return redirect(url_for("home_page"))
+
+    db = get_db()
+
+    # Get donor_id for this donation
+    donation = db.execute(
+        "SELECT donor_id FROM Donations WHERE donation_id = ?", (donation_id,)
+    ).fetchone()
+
+    if not donation:
+        flash("Donation not found.", "error")
+        return redirect(url_for("home_page"))
+
+    donor_id = donation["donor_id"]
+
+    # Prevent duplicate claim
+    existing = db.execute(
+        "SELECT * FROM Matches_ex WHERE donation_id = ? AND recipient_id = ?",
+        (donation_id, user["user_id"]),
+    ).fetchone()
+
+    if existing:
+        flash("You’ve already requested this donation.", "warning")
+        return redirect(url_for("home_page"))
+
+    # Insert new match
+    db.execute(
+        "INSERT INTO Matches_ex (donation_id, recipient_id, donor_id, status) VALUES (?, ?, ?, ?)",
+        (donation_id, user["user_id"], donor_id, "Pending"),
+    )
+    db.commit()
+
+    flash("You have requested this donation. Waiting for donor approval.", "success")
+    return redirect(url_for("home_page"))
+
+
+# ----------------- UPDATE MATCH -----------------
+@app.route("/matches/<int:match_id>/<status>", methods=["POST"])
+@login_required
+def update_match_status(match_id, status):
+    user = current_user()
+
+    if user["role"] != "Donor":
+        flash("Only donors can update match status.", "error")
+        return redirect(url_for("matches"))
+
+    db = get_db()
+    db.execute(
+        "UPDATE Matches_ex SET status = ? WHERE match_id = ? AND donor_id = ?",
+        (status, match_id, user["user_id"]),
+    )
+    db.commit()
+
+    flash(f"Match {status}.", "success")
+    return redirect(url_for("matches"))
 
 
 # ----------------- RUN APP -----------------

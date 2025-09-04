@@ -1,19 +1,41 @@
-{% extends "layout.html" %}
+{% extends "layout.html"%}
 
-{% block title %}Matches{% endblock %}
+{% block title %}Your Matches{% endblock %}
 
 {% block content %}
+
 <main>
-  <h1>Pending Matches</h1>
+  <h1>Your Matches</h1>
   <div class="container">
     {% for match in matches %}
-      <div class="card">
-        <p class="card-name">Recipient: {{ match.recipient_name }}</p>
-        <p class="card-about">{{ match.items }}</p>
-        <p>{{ match.category }} - Status: {{ match.status }}</p>
+      <div class="card" style="max-width: 30rem">
+        <img 
+          src="{{ url_for('static', filename=match.image_url or 'placeholder.png') }}" 
+          class="card-image"
+        >
+        <div class="card-body">
+          <h3>{{ match.items }}</h3>
+          <p>Category: {{ match.category }}</p>
+
+          {% if user['role'] == "Donor" %}
+            <p>Requested by: {{ match.recipient_name }}</p>
+            <p>Status: {{ match.status }}</p>
+
+            {% if match.status == "Pending" %}
+            <form action="{{ url_for('update_match_status', match_id=match.match_id, status='Accepted') }}" method="POST">
+              <button type="submit" class="btn success">Accept</button>
+            </form>
+            <form action="{{ url_for('update_match_status', match_id=match.match_id, status='Rejected') }}" method="POST">
+              <button type="submit" class="btn danger">Reject</button>
+            </form>
+            {% endif %}
+
+          {% else %}
+            <p>Donor: {{ match.donor_name }}</p>
+            <p>Status: {{ match.status }}</p>
+          {% endif %}
+        </div>
       </div>
-    {% else %}
-      <p>No pending matches.</p>
     {% endfor %}
   </div>
 </main>

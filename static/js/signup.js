@@ -9,18 +9,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const symbolItem = document.getElementById("symbol");
   const matchItem = document.getElementById("match");
 
+  const roleSelect = document.getElementById("role");
+  const recipientCategories = document.getElementById("recipientCategories");
+
   if (!password || !confirm || !checklist) return; // safety
 
   const symbolRegex = /[!@#$%^&*(),.?":{}|<>]/;
   const uppercaseRegex = /[A-Z]/;
 
   function showChecklist() {
-    checklist.classList.remove("hidden");
+    checklist.classList.add("show");
   }
 
   function hideChecklist() {
-    checklist.classList.add("hidden");
+    checklist.classList.remove("show");
   }
+
 
   // Validation function — updates classes on each rule
   function validate() {
@@ -82,6 +86,28 @@ document.addEventListener("DOMContentLoaded", () => {
   // live validation while typing
   password.addEventListener("input", validate);
   confirm.addEventListener("input", validate);
+
+  password.addEventListener("focus", showChecklist);
+  confirm.addEventListener("focus", showChecklist);
+
+  password.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (document.activeElement !== password && document.activeElement !== confirm) hideChecklist();
+    }, 50);
+  });
+  confirm.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (document.activeElement !== password && document.activeElement !== confirm) hideChecklist();
+    }, 50);
+  });
+
+  roleSelect.addEventListener("change", () => {
+    if (roleSelect.value === "Recipient") {
+      recipientCategories.classList.remove("hidden");
+    } else {
+      recipientCategories.classList.add("hidden");
+    }
+  });
 
   // initialize state: hidden until focus
   hideChecklist();

@@ -38,7 +38,7 @@
     >
 
     <!-- Password checklist (hidden until focus) -->
-    <div id="passwordChecklist" class="password-checklist hidden">
+    <div id="passwordChecklist" class="password-checklist">
       <ul>
         <li id="length" class="invalid">At least 8 characters</li>
         <li id="uppercase" class="invalid">At least 1 uppercase letter</li>
@@ -53,6 +53,16 @@
       <option value="Donor">Donor</option>
       <option value="Recipient">Recipient</option>
     </select>
+
+    <div id="recipientCategories" class="recipient-categories hidden">
+      <p>Select categories you’re interested in:</p>
+      <label><input type="checkbox" name="categories" value="Clothes"> Clothes</label><br>
+      <label><input type="checkbox" name="categories" value="Food"> Food</label><br>
+      <label><input type="checkbox" name="categories" value="Books"> Education</label><br>
+      <label><input type="checkbox" name="categories" value="Electronics"> Tech</label><br>
+      <label><input type="checkbox" name="categories" value="Furniture"> Furniture</label><br>
+      <label><input type="checkbox" name="categories" value="Medication"> Medication</label><br>
+    </div>
 
     <button type="submit" class="btn">Sign Up</button>
 

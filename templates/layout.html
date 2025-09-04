@@ -24,7 +24,12 @@
         <li><a href="{{ url_for('home_page') }}">Home</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
         <li><a href="{{ url_for('add') }}">Add Donation</a></li>
-        <li><a href="{{ url_for('matches') }}">Matches</a></li>
+        {% if user['role'] == "Donor"%}
+          <li><a href="{{ url_for('matches') }}">My Donations</a></li>
+        {% endif %}
+        {% if user['role'] == "Recipient"%}
+          <li><a href="{{ url_for('matches') }}">My Requests</a></li>
+        {% endif %}
         <li><a href="{{ url_for('signout') }}">Sign Out</a></li>
       {% endif %}
     </ul>

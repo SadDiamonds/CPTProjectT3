@@ -7,11 +7,16 @@
   <h1>Recent Donations</h1>
   <div class="container">
     {% for donation in donations %}
-      <div class="card">
-          <img src="{{ url_for('static', filename=donation.image_url or 'default.jpg') }}" class="card-image">
+      <div class="card" style="max-width: 30rem">
+          <img src="{{ url_for('static', filename=donation.image_url) if donation.image_url else url_for('static', filename='Images/placeholder.png') }}" class="card-image">
           <h2 class="card-name">{{ donation.items }}</h2>
           <p class="card-about">{{ donation.category }}</p>
           <p><small>Donated on {{ donation.date_donated }}</small></p>
+          {% if user and user['role'] == "Recipient"%}
+          <form action="{{ url_for('claim_donation', donation_id=donation.donation_id) }}" method="POST">
+            <button type="submit" class="btn">Claim</button>
+          </form>
+          {% endif %}
       </div>
     {% else %}
       <p>No donations yet.</p>
