@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}Preferences{% endblock %}
+
+{% block content %}
+<main>
+  <h1>Choose Your Preferred Categories</h1>
+  <form action="{{ url_for('save_preferences') }}" method="POST">
+    <div class="checkbox-group">
+      {% for category in ["Clothes", "Food", "Books", "Toys", "Furniture"] %}
+        <label>
+          <input 
+            type="checkbox" 
+            name="categories" 
+            value="{{ category }}"
+            {% if category in user_prefs %}checked{% endif %}
+          >
+          {{ category }}
+        </label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn">Save Preferences</button>
+  </form>
+</main>
+{% endblock %}

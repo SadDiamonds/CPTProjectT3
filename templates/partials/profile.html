@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<main>
+  <h1>{{ profile_user.name }}’s Profile</h1>
+  <p>Role: {{ profile_user.role }}</p>
+  <p>Joined: {{ profile_user.date_created }}</p>
+
+  <h2>Badges</h2>
+  <div class="badges">
+    {% if badges %}
+      {% for badge in badges %}
+        <div class="badge">
+          <img src="{{ url_for('static', filename='badges/' ~ badge.icon) }}" alt="{{ badge.name }}">
+          <p>{{ badge.name }}</p>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No badges earned yet. Keep participating!</p>
+    {% endif %}
+  </div>
+
+  <div class="profile-rating">
+    <h2>Average Rating: {{ avg_rating|round(1) }}/5 ⭐</h2>
+    <ul>
+      {% for r in ratings %}
+        <li>
+          <strong>{{ r.rater_name }}</strong>: {{ r.rating }}⭐ – "{{ r.comment }}"
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</main>
+{% endblock %}

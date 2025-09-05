@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block title %}Leave a Rating{% endblock %}
+
+{% block content %}
+<main>
+  <h1>Rate Your Experience</h1>
+  <form action="{{ url_for('submit_rating', match_id=match.match_id) }}" method="POST">
+    <label for="rating">Rating (1-5)</label>
+    <select name="rating" id="rating" required>
+      <option value="1">⭐</option>
+      <option value="2">⭐⭐</option>
+      <option value="3">⭐⭐⭐</option>
+      <option value="4">⭐⭐⭐⭐</option>
+      <option value="5">⭐⭐⭐⭐⭐</option>
+    </select>
+
+    <label for="comment">Comment</label>
+    <textarea name="comment" id="comment" placeholder="Write something..."></textarea>
+
+    <button type="submit" class="btn">Submit</button>
+  </form>
+</main>
+{% endblock %}
