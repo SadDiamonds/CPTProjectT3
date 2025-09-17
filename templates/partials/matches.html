@@ -1,41 +1,67 @@
-{% extends "layout.html"%}
+{% extends "layout.html" %}
 
 {% block title %}Your Matches{% endblock %}
 
 {% block content %}
-
 <main>
   <h1>Your Matches</h1>
+
   <div class="container">
     {% for match in matches %}
       <div class="card" style="max-width: 30rem">
         <img 
           src="{{ url_for('static', filename=match.image_url or 'placeholder.png') }}" 
           class="card-image"
+          alt="Donation Image"
         >
+
         <div class="card-body">
           <h3>{{ match.items }}</h3>
-          <p>Category: {{ match.category }}</p>
+          <p><strong>Category:</strong> {{ match.category }}</p>
+          <p><strong>Status:</strong> {{ match.status }}</p>
 
           {% if user['role'] == "Donor" %}
-            <p>Requested by: {{ match.recipient_name }}</p>
-            <p>Status: {{ match.status }}</p>
+            <p><strong>Requested by:</strong> {{ match.recipient_name }}</p>
 
+            {# Accept / Reject options #}
             {% if match.status == "Pending" %}
-            <form action="{{ url_for('update_match_status', match_id=match.match_id, status='Accepted') }}" method="POST">
-              <button type="submit" class="btn success">Accept</button>
-            </form>
-            <form action="{{ url_for('update_match_status', match_id=match.match_id, status='Rejected') }}" method="POST">
-              <button type="submit" class="btn danger">Reject</button>
-            </form>
+              <form action="{{ url_for('update_match_status', match_id=match.match_id, status='Accepted') }}" method="POST">
+                <button type="submit" class="btn success">Accept</button>
+              </form>
+              <form action="{{ url_for('update_match_status', match_id=match.match_id, status='Rejected') }}" method="POST">
+                <button type="submit" class="btn danger">Reject</button>
+              </form>
             {% endif %}
 
           {% else %}
-            <p>Donor: {{ match.donor_name }}</p>
-            <p>Status: {{ match.status }}</p>
+            <p><strong>Donor:</strong> {{ match.donor_name }}</p>
+          {% endif %}
+
+          {# Mark as Completed #}
+          {% if match.status == "Accepted" %}
+            {% if user['user_id'] == match.donor_id and not match.donor_completed %}
+              <form action="{{ url_for('complete_match', match_id=match.match_id) }}" method="POST">
+                <button type="submit" class="btn success">Mark as Completed</button>
+              </form>
+            {% elif user['user_id'] == match.recipient_id and not match.recipient_completed %}
+              <form action="{{ url_for('complete_match', match_id=match.match_id) }}" method="POST">
+                <button type="submit" class="btn success">Mark as Completed</button>
+              </form>
+            {% endif %}
+          {% endif %}
+
+          {# Leave a Rating #}
+          {% if match.status == "Completed" %}
+            {% if not match.user_rating %}
+              <a href="{{ url_for('rate', match_id=match.match_id) }}">Leave a Rating</a>
+            {% else %}
+              <span>You rated: {{ match.user_rating }}/5</span>
+            {% endif %}
           {% endif %}
         </div>
       </div>
+    {% else %}
+      <p>No matches found.</p>
     {% endfor %}
   </div>
 </main>

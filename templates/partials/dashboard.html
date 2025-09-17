@@ -7,20 +7,21 @@
 
   {% if user.role == "Donor" %}
     <section>
-      <h2>Your Donations</h2>
-      <p>Total Donations: {{ stats.total_donations }}</p>
-      <p>Completed Matches: {{ stats.completed_donations }}</p>
-      <p>Pending Matches: {{ stats.pending_matches }}</p>
+      <h2>Your Donations</h2><br>
+      <p>Total Donations: {{ stats.total_donations }}</p><br>
+      <p>Completed Matches: {{ stats.completed_donations }}</p><br>
+      <p>Pending Matches: {{ stats.pending_matches }}</p><br>
     </section>
   {% else %}
     <section>
-      <h2>Your Claims</h2>
-      <p>Total Claims: {{ stats.total_claims }}</p>
-      <p>Completed Claims: {{ stats.completed_claims }}</p>
-      <p>Pending Claims: {{ stats.pending_claims }}</p>
+      <h2>Your Claims</h2><br>
+      <p>Total Claims: {{ stats.total_claims }}</p><br>
+      <p>Completed Claims: {{ stats.completed_claims }}</p><br>
+      <p>Pending Claims: {{ stats.pending_claims }}</p><br>
     </section>
   {% endif %}
 
+  <br>
   <a href="{{ url_for('home_page') }}" class="btn">Back to Home</a>
 </main>
 {% endblock %}

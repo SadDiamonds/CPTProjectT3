@@ -26,11 +26,6 @@ app.secret_key = "supersecretkey"
 
 DATABASE = "database/data_source.db"
 
-# ----------------- ABOUT -----------------
-@app.route("/about")
-def about():
-    return render_template("partials/about.html", user=current_user())
-
 
 # ----------------- DB CONNECTION -----------------
 def get_db():
@@ -48,14 +43,10 @@ def close_connection(exception):
         db.close()
 
 
-# ----------------- UTILS -----------------
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+# ----------------- UTIL / AUTH -----------------
 
-
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
+def allowed_file(filename): 
+  return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def current_user():
     if "user_id" in session:
@@ -77,6 +68,14 @@ def login_required(f):
     return decorated_function
 
 
+@app.route("/")
+def root_redirect():
+    if "user_id" in session:
+        return redirect(url_for("donations_page"))
+    else:
+        return redirect(url_for("landing_page"))
+
+
 def opp_login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -87,38 +86,7 @@ def opp_login_required(f):
     return decorated_function
 
 
-# ----------------- ROUTES -----------------
-@app.route("/")
-@opp_login_required
-def landing_page():
-    return render_template("landing.html")
-
-
-@app.route("/home")
-@login_required
-def home_page():
-    db = get_db()
-    user = current_user()
-
-    if user["role"] == "Donor":
-        donations = db.execute(
-            "SELECT * FROM Donations WHERE donor_id = ? ORDER BY donation_id DESC",
-            (user["user_id"],),
-        ).fetchall()
-    else:
-        donations = db.execute(
-            """
-            SELECT * FROM Donations 
-            WHERE donation_id NOT IN (SELECT donation_id FROM Matches WHERE recipient_id = ?)
-            ORDER BY donation_id DESC LIMIT 6
-            """,
-            (user["user_id"],),
-        ).fetchall()
-
-    return render_template("home.html", user=user, donations=donations)
-
-
-# ----------------- SIGN UP -----------------
+# ------------------ SIGN UP -----------------
 @app.route("/signup", methods=["GET", "POST"])
 def signup_page():
     if request.method == "POST":
@@ -171,6 +139,7 @@ def signup_page():
     return render_template("partials/signup.html", user=current_user())
 
 
+# ------------------ SIGN IN -----------------
 # ----------------- SIGN IN -----------------
 @app.route("/signin", methods=["GET", "POST"])
 def signin_page():
@@ -184,7 +153,7 @@ def signin_page():
         if user and check_password_hash(user["password"], password):
             session["user_id"] = user["user_id"]
             flash(f"Welcome back, {user['name']}!", "success")
-            return redirect(url_for("home_page"))
+            return redirect(url_for("donations_page"))
         else:
             flash("Invalid credentials", "error")
             return redirect(url_for("signin_page"))
@@ -192,73 +161,38 @@ def signin_page():
     return render_template("partials/signin.html", user=current_user())
 
 
-# ----------------- SIGN OUT -----------------
-@app.route("/signout")
-def signout():
-    session.clear()
-    flash("You have been signed out.", "info")
-    return redirect(url_for("landing_page"))
-
-
-# ----------------- ADD DONATION -----------------
-@app.route("/add", methods=["GET", "POST"])
+# ----------------- HOME (donations listing) -----------------
+@app.route("/home")
 @login_required
-def add():
-    user = current_user()
-    if request.method == "POST":
-        items = request.form.get("items")
-        category = request.form.get("category")
-        date_donated = datetime.now().strftime("%d/%m/%y %H:%M")
-
-        image_file = request.files.get("image")
-        image_filename = None
-        if image_file and allowed_file(image_file.filename):
-            filename = secure_filename(image_file.filename)
-            image_path = os.path.join(current_app.root_path, "static/uploads", filename)
-            os.makedirs(os.path.dirname(image_path), exist_ok=True)
-            image_file.save(image_path)
-            image_filename = f"uploads/{filename}"
-
-        db = get_db()
-        db.execute(
-            "INSERT INTO Donations (donor_id, category, items, date_donated, image_url) VALUES (?, ?, ?, ?, ?)",
-            (user["user_id"], category, items, date_donated, image_filename),
-        )
-        db.commit()
-        flash("Donation added!", "success")
-        return redirect(url_for("home_page"))
-
-    return render_template("partials/add.html", user=user)
-
-
-# ----------------- PREFERENCES -----------------
-@app.route("/preferences", methods=["GET", "POST"])
-@login_required
-def preferences():
+def home_page():
     db = get_db()
     user = current_user()
+    
+    search = request.args.get("q", "").strip()
+    search_pattern = f"%{search}%" if search else "%"
 
-    if request.method == "POST":
-        categories = request.form.getlist("categories")
-        db.execute("DELETE FROM Preferences WHERE user_id=?", (user["user_id"],))
-        for c in categories:
-            db.execute(
-                "INSERT INTO Preferences (user_id, category) VALUES (?, ?)",
-                (user["user_id"], c),
-            )
-        db.commit()
-        flash("Preferences saved!", "success")
-        return redirect(url_for("home_page"))
+    if user["role"] == "Donor":
+        donations = db.execute(
+            "SELECT * FROM Donations WHERE donor_id = ? AND (items LIKE ? OR category LIKE ?) ORDER BY donation_id DESC",
+            (user["user_id"],search_pattern, search_pattern),
+        ).fetchall()
+    else:
+        # For recipients: show donations that are NOT already claimed in matches_ex
+        donations = db.execute(
+            """
+            SELECT * FROM Donations d
+            WHERE d.donation_id NOT IN (SELECT donation_id FROM matches_ex)
+              AND (d.items LIKE ? OR d.category LIKE ?)
+            ORDER BY d.donation_id DESC
+            LIMIT 6
+            """,
+            (search_pattern, search_pattern),
+        ).fetchall()
 
-    user_prefs = db.execute(
-        "SELECT category FROM Preferences WHERE user_id=?", (user["user_id"],)
-    ).fetchall()
-    return render_template(
-        "preferences.html", user=user, user_prefs=[p["category"] for p in user_prefs]
-    )
+    return render_template("home.html", user=user, donations=donations, search=search)
 
 
-# ----------------- MATCHES -----------------
+# ----------------- MATCHES (list user's matches) -----------------
 @app.route("/matches")
 @login_required
 def matches():
@@ -266,27 +200,91 @@ def matches():
     user = current_user()
 
     if user["role"] == "Donor":
+        # Donor: show all matches where donor_id = current user
         matches = db.execute(
-            """SELECT m.match_id, d.items, d.category, d.image_url, u.name as recipient_name, m.status
-              FROM Matches m
-              JOIN Donations d ON m.donation_id = d.donation_id
-              JOIN Users u ON m.recipient_id = u.user_id
-              WHERE m.donor_id = ?""",
-            (user["user_id"],),
+            """
+            SELECT m.match_id, m.donation_id, m.status, m.donor_completed, m.recipient_completed,
+                  d.items, d.category, d.image_url,
+                  u.name as recipient_name, m.donor_id, m.recipient_id,
+                  r.rating AS user_rating, r.comment AS user_comment
+            FROM matches_ex m
+            JOIN Donations d ON m.donation_id = d.donation_id
+            JOIN Users u ON m.recipient_id = u.user_id
+            LEFT JOIN Ratings r 
+                ON r.match_id = m.match_id AND r.rater_id = ?
+            WHERE m.donor_id = ?
+            ORDER BY m.match_id DESC
+        """,
+            (user["user_id"], user["user_id"]),
         ).fetchall()
+
     else:
+        # Recipient: show matches where recipient_id = current user AND status != 'Rejected'
         matches = db.execute(
-            """SELECT m.match_id, d.items, d.category, d.image_url, u.name as donor_name, m.status
-              FROM Matches m
-              JOIN Donations d ON m.donation_id = d.donation_id
-              JOIN Users u ON m.donor_id = u.user_id
-              WHERE m.recipient_id = ?""",
-            (user["user_id"],),
+            """
+            SELECT m.match_id, m.donation_id, m.status, m.donor_completed, m.recipient_completed,
+                  d.items, d.category, d.image_url,
+                  u.name as donor_name, m.donor_id, m.recipient_id,
+                  r.rating AS user_rating, r.comment AS user_comment
+            FROM matches_ex m
+            JOIN Donations d ON m.donation_id = d.donation_id
+            JOIN Users u ON m.donor_id = u.user_id
+            LEFT JOIN Ratings r 
+                ON r.match_id = m.match_id AND r.rater_id = ?
+            WHERE m.recipient_id = ? AND m.status != 'Rejected'
+            ORDER BY m.match_id DESC
+        """,
+            (user["user_id"], user["user_id"]),
         ).fetchall()
 
     return render_template("partials/matches.html", matches=matches, user=user)
 
 
+# ----------------- ABOUT -----------------
+@app.route("/about", endpoint="about")
+def about():
+    return render_template("partials/about.html", user=current_user())
+
+# ----------------- ADD DONATION -----------------
+@app.route("/add", methods=["GET", "POST"])
+@login_required 
+def add(): 
+  user = current_user() 
+  if request.method == "POST": 
+    items = request.form.get("items") 
+    category = request.form.get("category") 
+    date_donated = datetime.now().strftime("%d/%m/%y %H:%M") 
+    image_file = request.files.get("image") 
+    image_filename = None 
+    if image_file and allowed_file(image_file.filename): 
+      filename = secure_filename(image_file.filename) 
+      image_path = os.path.join(current_app.root_path, "static/uploads", filename) 
+      os.makedirs(os.path.dirname(image_path), exist_ok=True) 
+      image_file.save(image_path) 
+      image_filename = f"uploads/{filename}" 
+      db = get_db() 
+      db.execute( "INSERT INTO Donations (donor_id, category, items, date_donated, image_url) VALUES (?, ?, ?, ?, ?)", (user["user_id"], category, items, date_donated, image_filename), ) 
+      db.commit() 
+      flash("Donation added!", "success") 
+      return redirect(url_for("home_page")) 
+  return render_template("partials/add.html", user=user)
+# uhhhh
+
+# ------------------- SIGN OUT -------------------
+@app.route("/signout") 
+def signout(): 
+    session.clear() 
+    flash("You have been signed out.", "info") 
+    return redirect(url_for("landing_page"))
+
+
+@app.route("/landing")
+@opp_login_required
+def landing_page():
+    return render_template("landing.html")
+
+
+# ----------------- CLAIM recipient requests a donation) -----------------
 @app.route("/claim/<int:donation_id>", methods=["POST"])
 @login_required
 def claim_donation(donation_id):
@@ -304,24 +302,27 @@ def claim_donation(donation_id):
         flash("Donation not found.", "error")
         return redirect(url_for("home_page"))
 
+    # Check existing in matches_ex (use matches_ex table)
     existing = db.execute(
-        "SELECT * FROM Matches WHERE donation_id = ? AND recipient_id = ?",
-        (donation_id, user["user_id"]),
+        "SELECT * FROM matches_ex WHERE donation_id = ?",
+        (donation_id,),
     ).fetchone()
     if existing:
-        flash("You’ve already requested this donation.", "warning")
+        flash("This donation has already been requested/claimed.", "warning")
         return redirect(url_for("home_page"))
 
+    # Insert into matches_ex
     db.execute(
-        "INSERT INTO Matches (donation_id, recipient_id, donor_id, status) VALUES (?, ?, ?, ?)",
-        (donation_id, user["user_id"], donation["donor_id"], "Pending"),
+        "INSERT INTO matches_ex (donation_id, recipient_id, donor_id, status, donor_completed, recipient_completed) VALUES (?, ?, ?, ?, ?, ?)",
+        (donation_id, user["user_id"], donation["donor_id"], "Pending", 0, 0),
     )
     db.commit()
 
     flash("You have requested this donation.", "success")
-    return redirect(url_for("home_page"))
+    return redirect(url_for("matches"))
 
 
+# ----------------- UPDATE MATCH STATUS (Donor: Accept / Reject) -----------------
 @app.route("/matches/<int:match_id>/<status>", methods=["POST"])
 @login_required
 def update_match_status(match_id, status):
@@ -332,52 +333,130 @@ def update_match_status(match_id, status):
         flash("Only donors can update match status.", "error")
         return redirect(url_for("matches"))
 
+    # Only update matches_ex
     db.execute(
-        "UPDATE Matches SET status = ? WHERE match_id = ? AND donor_id = ?",
+        "UPDATE matches_ex SET status = ? WHERE match_id = ? AND donor_id = ?",
         (status, match_id, user["user_id"]),
     )
     db.commit()
+
+    # If rejected, you might want to keep or delete the match row; currently we keep it but status changes.
     flash(f"Match {status}.", "success")
     return redirect(url_for("matches"))
 
 
-# ----------------- RATINGS -----------------
+# ----------------- MARK AS COMPLETED (either side) -----------------
+@app.route("/matches/<int:match_id>/complete", methods=["POST"])
+@login_required
+def complete_match(match_id):
+    db = get_db()
+    user = current_user()
+
+    match = db.execute(
+        "SELECT * FROM matches_ex WHERE match_id = ?", (match_id,)
+    ).fetchone()
+    if not match:
+        flash("Match not found.", "error")
+        return redirect(url_for("matches"))
+
+    # Only donor or recipient may mark completed
+    if user["user_id"] == match["donor_id"]:
+        db.execute(
+            "UPDATE matches_ex SET donor_completed = 1 WHERE match_id = ?", (match_id,)
+        )
+    elif user["user_id"] == match["recipient_id"]:
+        db.execute(
+            "UPDATE matches_ex SET recipient_completed = 1 WHERE match_id = ?",
+            (match_id,),
+        )
+    else:
+        flash("Unauthorized action.", "error")
+        return redirect(url_for("matches"))
+
+    # Re-fetch and if both confirmed => set status to Completed
+    match = db.execute(
+        "SELECT donor_completed, recipient_completed FROM matches_ex WHERE match_id = ?",
+        (match_id,),
+    ).fetchone()
+    if match and match["donor_completed"] and match["recipient_completed"]:
+        db.execute(
+            "UPDATE matches_ex SET status = 'Completed' WHERE match_id = ?", (match_id,)
+        )
+
+    db.commit()
+    flash("Marked as completed.", "success")
+    return redirect(url_for("matches"))
+
+
+# ----------------- RATE (only for completed matches) -----------------
 @app.route("/rate/<int:match_id>", methods=["GET", "POST"])
 @login_required
 def rate(match_id):
     db = get_db()
     user = current_user()
 
-    match = db.execute("SELECT * FROM Matches WHERE match_id=?", (match_id,)).fetchone()
-    if not match or match["status"] != "Completed":
+    match = db.execute(
+        "SELECT * FROM matches_ex WHERE match_id=?", (match_id,)
+    ).fetchone()
+    if not match or (match["status"] or "").lower() != "completed":
         flash("You can only rate completed matches.", "error")
         return redirect(url_for("matches"))
 
-    if request.method == "POST":
-        rating = int(request.form.get("rating"))
-        comment = request.form.get("comment")
-        rater_id = user["user_id"]
-        rated_id = (
-            match["donor_id"] if user["role"] == "Recipient" else match["recipient_id"]
-        )
-
-        db.execute(
-            "INSERT INTO Ratings (match_id, rater_id, rated_id, rating, comment) VALUES (?, ?, ?, ?, ?)",
-            (match_id, rater_id, rated_id, rating, comment),
-        )
-        db.commit()
-        flash("Rating submitted!", "success")
+    # Prevent duplicate rating by same rater for this match
+    already = db.execute(
+        "SELECT * FROM Ratings WHERE match_id = ? AND rater_id = ?",
+        (match_id, user["user_id"]),
+    ).fetchone()
+    if already:
+        flash("You have already rated this match.", "warning")
         return redirect(url_for("matches"))
+
+    if request.method == "POST":
+        try:
+            rating = int(request.form.get("rating"))
+            comment = request.form.get("comment") or ""
+            rater_id = user["user_id"]
+            # who is being rated?
+            rated_id = (
+                match["donor_id"]
+                if user["role"] == "Recipient"
+                else match["recipient_id"]
+            )
+
+            db.execute(
+                "INSERT INTO Ratings (match_id, rater_id, rated_id, rating, comment) VALUES (?, ?, ?, ?, ?)",
+                (match_id, rater_id, rated_id, rating, comment),
+            )
+            db.commit()
+            flash("Rating submitted!", "success")
+            return redirect(url_for("matches"))
+        except Exception as e:
+            flash("Failed to submit rating.", "error")
+            return redirect(url_for("rate", match_id=match_id))
 
     return render_template("partials/rate.html", match=match, user=user)
 
 
-# ----------------- PROFILE + BADGES -----------------
-@app.route("/profile/<user_id>")
+# ----------------- PROFILE (unchanged but ensure current_user passed) -----------------
+@app.route("/profile/<user_id>", methods=["GET"])
 @login_required
 def profile(user_id):
     db = get_db()
-    user_data = db.execute("SELECT * FROM Users WHERE user_id=?", (user_id,)).fetchone()
+    profile_user = db.execute(
+        "SELECT * FROM Users WHERE user_id=?", (user_id,)
+    ).fetchone()
+    if not profile_user:
+        flash("User not found.", "error")
+        return redirect(url_for("home_page"))
+
+    # Parse creation date if stored as DD/MM/YYYY HH:MM:SS
+    created_str = profile_user.get("creation_date", "")
+    try:
+        created_dt = datetime.strptime(created_str, "%d/%m/%Y %H:%M:%S")
+        created_str = created_dt.strftime("%d %B %Y, %H:%M")
+    except Exception:
+        pass
+
     ratings = db.execute(
         "SELECT r.rating, r.comment, u.name as rater_name FROM Ratings r JOIN Users u ON r.rater_id = u.user_id WHERE r.rated_id=?",
         (user_id,),
@@ -399,8 +478,9 @@ def profile(user_id):
     return render_template(
         "partials/profile.html",
         user=current_user(),
-        profile_user=user_data,
+        profile_user=profile_user,
         ratings=ratings,
+        creation_str=created_str,
         avg_rating=avg_rating or 0,
         badges=badges,
     )
@@ -417,8 +497,8 @@ def dashboard():
         stats = db.execute(
             """SELECT 
                   COUNT(*) as total_donations,
-                  SUM(CASE WHEN donation_id IN (SELECT donation_id FROM Matches WHERE status = 'Completed') THEN 1 ELSE 0 END) as completed_donations,
-                  SUM(CASE WHEN donation_id IN (SELECT donation_id FROM Matches WHERE status = 'Pending') THEN 1 ELSE 0 END) as pending_matches
+                  SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Completed') THEN 1 ELSE 0 END) as completed_donations,
+                  SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Pending') THEN 1 ELSE 0 END) as pending_matches
               FROM Donations WHERE donor_id = ?""",
             (user["user_id"],),
         ).fetchone()
@@ -428,13 +508,57 @@ def dashboard():
                   COUNT(*) as total_claims,
                   SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_claims,
                   SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending_claims
-              FROM Matches WHERE recipient_id = ?""",
+              FROM matches_ex WHERE recipient_id = ?""",
             (user["user_id"],),
         ).fetchone()
 
     return render_template("partials/dashboard.html", user=user, stats=stats)
 
 
-# ----------------- RUN -----------------
+# ----------------- DONATION PAGE -----------------
+@app.route("/donations")
+@login_required
+def donations_page():
+    db = get_db()
+    user = current_user()
+
+    search = request.args.get("q", "")
+    category = request.args.get("category", "")
+
+    query = "SELECT * FROM Donations"
+    conditions = []
+    params = []
+
+    # 🔍 Apply search
+    if search:
+        conditions.append("(items LIKE ? OR category LIKE ?)")
+        params.extend([f"%{search}%", f"%{search}%"])
+
+    # 📂 Apply category filter
+    if category:
+        conditions.append("category = ?")
+        params.append(category)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY donation_id DESC"
+
+    donations = db.execute(query, tuple(params)).fetchall()
+
+    # get distinct categories for dropdown
+    categories = db.execute("SELECT DISTINCT category FROM Donations").fetchall()
+
+    return render_template(
+        "donations.html",
+        user=user,
+        donations=donations,
+        search=search,
+        category=category,
+        categories=[c["category"] for c in categories],
+    )
+
+
+# ----------------- run -----------------
 if __name__ == "__main__":
     app.run(debug=True)

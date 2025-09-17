@@ -357,4 +357,11 @@ ORDER BY donations_received DESC;
 ![](static/Images/SQL_Query6.png)
 
 ## **Week 6-7 - HTML SQL PYTHON CSS JAVASCRIPT HAHAHAHAHAHA**
-I insane
+
+### The pain begins
+OK so like I don't wanna do this, is this necessary uhhhhh
+
+## **Week 9-10 - e**
+
+### EZZ IM TOO GOOD
+![](static/Images/EZ.png)
