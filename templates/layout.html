@@ -5,26 +5,26 @@
   <meta charset="UTF-8">
   <title>{% block title %}Gratia{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 </head>
 <body>
   <nav>
-  {% if not user%}
-    <a href="{{ url_for('landing_page') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
-  {%else%}
-    <a href="{{ url_for('donations_page') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
-  {%endif%}
+    {% if not user %}
+      <a href="{{ url_for('landing_page') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
+    {% else %}
+      <a href="{{ url_for('donations_page') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
+    {% endif %}
     <ul>
       {% if not user %}
         <li><a href="{{ url_for('landing_page') }}">Home</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
         <li><a href="{{ url_for('signin_page') }}">Sign In</a></li>
       {% endif %}
-
       {% if user %}
         <li><a href="{{ url_for('donations_page') }}">Home</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
         <li><a href="{{ url_for('add') }}">Add Donation</a></li>
-        <li><a href="{{ url_for('dashboard')}}"> Dashboard</a></li>
+        <li><a href="{{ url_for('dashboard')}}">Dashboard</a></li>
         {% if user['role'] == "Donor"%}
           <li><a href="{{ url_for('matches') }}">My Donations</a></li>
         {% endif %}
@@ -35,7 +35,6 @@
         <li><a href="{{ url_for('signout') }}">Sign Out</a></li>
       {% endif %}
     </ul>
-
   </nav>
 
   <!-- Flash messages -->
@@ -49,6 +48,12 @@
     {% endif %}
   {% endwith %}
 
-  {% block content %}{% endblock %}
+  <!-- Swup container -->
+  <div id="swup" class="transition-fade">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="https://unpkg.com/swup@4"></script>
+  <script src="{{ url_for('static', filename='js/swup-init.js') }}"></script>
 </body>
 </html>

@@ -3,6 +3,8 @@ import uuid
 import hashlib
 import re
 import os
+import secrets
+import time
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import (
@@ -26,6 +28,7 @@ app.secret_key = "supersecretkey"
 
 DATABASE = "database/data_source.db"
 
+TOKEN_TTL = 3600
 
 # ----------------- DB CONNECTION -----------------
 def get_db():
@@ -46,7 +49,7 @@ def close_connection(exception):
 # ----------------- UTIL / AUTH -----------------
 
 def allowed_file(filename): 
-  return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def current_user():
     if "user_id" in session:
@@ -84,6 +87,80 @@ def opp_login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+# ------------------- FORGOT PASSWORD -------------------
+@app.route("/forgot", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email").strip().lower()
+        db = get_db()
+        user = db.execute("SELECT * FROM Users WHERE email=?", (email,)).fetchone()
+
+        if user:
+            # create secure random token
+            raw_token = secrets.token_urlsafe(48)
+            token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+            now = int(time.time())
+            expires_at = now + TOKEN_TTL
+
+            db.execute(
+                "INSERT INTO PasswordResetTokens (user_id, token_hash, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                (user["user_id"], token_hash, now, expires_at),
+            )
+            db.commit()
+
+            reset_url = url_for("reset_password", token=raw_token, _external=True)
+            # TODO: send this link via email (replace with real SMTP)
+            print("Password reset link:", reset_url)
+
+        flash("If the account exists, we sent a reset link.", "info")
+        return redirect(url_for("signin_page"))
+
+    return render_template("partials/forgot.html", user=current_user())
+
+
+@app.route("/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    db = get_db()
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    now = int(time.time())
+
+    record = db.execute(
+        "SELECT * FROM PasswordResetTokens WHERE token_hash=? AND used=0 AND expires_at>?",
+        (token_hash, now),
+    ).fetchone()
+
+    if not record:
+        flash("Invalid or expired link.", "error")
+        return redirect(url_for("signin_page"))
+
+    if request.method == "POST":
+        new_pw = request.form.get("password")
+        confirm = request.form.get("confirm_password")
+
+        if new_pw != confirm:
+            flash("Passwords do not match.", "error")
+            return redirect(request.url)
+
+        if not re.fullmatch(r'^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$', new_pw):
+            flash(
+                "Password must be at least 8 chars, include uppercase & symbol.",
+                "error",
+            )
+            return redirect(request.url)
+
+        hashed = generate_password_hash(new_pw)
+        db.execute(
+            "UPDATE Users SET password=? WHERE user_id=?", (hashed, record["user_id"])
+        )
+        db.execute("UPDATE PasswordResetTokens SET used=1 WHERE id=?", (record["id"],))
+        db.commit()
+
+        flash("Password has been reset. You can now sign in.", "success")
+        return redirect(url_for("signin_page"))
+
+    return render_template("partials/reset.html", user=current_user())
 
 
 # ------------------ SIGN UP -----------------
@@ -139,7 +216,6 @@ def signup_page():
     return render_template("partials/signup.html", user=current_user())
 
 
-# ------------------ SIGN IN -----------------
 # ----------------- SIGN IN -----------------
 @app.route("/signin", methods=["GET", "POST"])
 def signin_page():
@@ -182,7 +258,7 @@ def home_page():
             """
             SELECT * FROM Donations d
             WHERE d.donation_id NOT IN (SELECT donation_id FROM matches_ex)
-              AND (d.items LIKE ? OR d.category LIKE ?)
+            AND (d.items LIKE ? OR d.category LIKE ?)
             ORDER BY d.donation_id DESC
             LIMIT 6
             """,
@@ -204,9 +280,9 @@ def matches():
         matches = db.execute(
             """
             SELECT m.match_id, m.donation_id, m.status, m.donor_completed, m.recipient_completed,
-                  d.items, d.category, d.image_url,
-                  u.name as recipient_name, m.donor_id, m.recipient_id,
-                  r.rating AS user_rating, r.comment AS user_comment
+                d.items, d.category, d.image_url,
+                u.name as recipient_name, m.donor_id, m.recipient_id,
+                r.rating AS user_rating, r.comment AS user_comment
             FROM matches_ex m
             JOIN Donations d ON m.donation_id = d.donation_id
             JOIN Users u ON m.recipient_id = u.user_id
@@ -223,9 +299,9 @@ def matches():
         matches = db.execute(
             """
             SELECT m.match_id, m.donation_id, m.status, m.donor_completed, m.recipient_completed,
-                  d.items, d.category, d.image_url,
-                  u.name as donor_name, m.donor_id, m.recipient_id,
-                  r.rating AS user_rating, r.comment AS user_comment
+                d.items, d.category, d.image_url,
+                u.name as donor_name, m.donor_id, m.recipient_id,
+                r.rating AS user_rating, r.comment AS user_comment
             FROM matches_ex m
             JOIN Donations d ON m.donation_id = d.donation_id
             JOIN Users u ON m.donor_id = u.user_id
@@ -249,25 +325,25 @@ def about():
 @app.route("/add", methods=["GET", "POST"])
 @login_required 
 def add(): 
-  user = current_user() 
-  if request.method == "POST": 
-    items = request.form.get("items") 
-    category = request.form.get("category") 
-    date_donated = datetime.now().strftime("%d/%m/%y %H:%M") 
-    image_file = request.files.get("image") 
-    image_filename = None 
-    if image_file and allowed_file(image_file.filename): 
-      filename = secure_filename(image_file.filename) 
-      image_path = os.path.join(current_app.root_path, "static/uploads", filename) 
-      os.makedirs(os.path.dirname(image_path), exist_ok=True) 
-      image_file.save(image_path) 
-      image_filename = f"uploads/{filename}" 
-      db = get_db() 
-      db.execute( "INSERT INTO Donations (donor_id, category, items, date_donated, image_url) VALUES (?, ?, ?, ?, ?)", (user["user_id"], category, items, date_donated, image_filename), ) 
-      db.commit() 
-      flash("Donation added!", "success") 
-      return redirect(url_for("home_page")) 
-  return render_template("partials/add.html", user=user)
+    user = current_user() 
+    if request.method == "POST": 
+        items = request.form.get("items") 
+        category = request.form.get("category") 
+        date_donated = datetime.now().strftime("%d/%m/%y %H:%M") 
+        image_file = request.files.get("image") 
+        image_filename = None 
+        if image_file and allowed_file(image_file.filename): 
+            filename = secure_filename(image_file.filename) 
+            image_path = os.path.join(current_app.root_path, "static/uploads", filename) 
+            os.makedirs(os.path.dirname(image_path), exist_ok=True) 
+            image_file.save(image_path) 
+            image_filename = f"uploads/{filename}" 
+            db = get_db() 
+            db.execute( "INSERT INTO Donations (donor_id, category, items, date_donated, image_url) VALUES (?, ?, ?, ?, ?)", (user["user_id"], category, items, date_donated, image_filename), ) 
+            db.commit() 
+            flash("Donation added!", "success") 
+        return redirect(url_for("home_page")) 
+    return render_template("partials/add.html", user=user)
 # uhhhh
 
 # ------------------- SIGN OUT -------------------
@@ -450,7 +526,7 @@ def profile(user_id):
         return redirect(url_for("home_page"))
 
     # Parse creation date if stored as DD/MM/YYYY HH:MM:SS
-    created_str = profile_user.get("creation_date", "")
+    created_str = getattr(profile_user, "creation_date", "")
     try:
         created_dt = datetime.strptime(created_str, "%d/%m/%Y %H:%M:%S")
         created_str = created_dt.strftime("%d %B %Y, %H:%M")
@@ -496,19 +572,19 @@ def dashboard():
     if user["role"] == "Donor":
         stats = db.execute(
             """SELECT 
-                  COUNT(*) as total_donations,
-                  SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Completed') THEN 1 ELSE 0 END) as completed_donations,
-                  SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Pending') THEN 1 ELSE 0 END) as pending_matches
-              FROM Donations WHERE donor_id = ?""",
+                    COUNT(*) as total_donations,
+                    SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Completed') THEN 1 ELSE 0 END) as completed_donations,
+                    SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Pending') THEN 1 ELSE 0 END) as pending_matches
+            FROM Donations WHERE donor_id = ?""",
             (user["user_id"],),
         ).fetchone()
     else:
         stats = db.execute(
             """SELECT 
-                  COUNT(*) as total_claims,
-                  SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_claims,
-                  SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending_claims
-              FROM matches_ex WHERE recipient_id = ?""",
+                    COUNT(*) as total_claims,
+                    SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_claims,
+                    SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending_claims
+            FROM matches_ex WHERE recipient_id = ?""",
             (user["user_id"],),
         ).fetchone()
 

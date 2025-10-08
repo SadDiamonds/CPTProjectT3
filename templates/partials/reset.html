@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block title %}Reset Password{% endblock %}
+<div id="swup" class="transition-fade">
+{% block content %}
+<main class="auth-container">
+  <h2>Reset Your Password</h2>
+  <form method="post" class="auth-form">
+    <div class="form-step">
+      <label for="password">New Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter new password" required>
+    </div>
+
+    <!-- Password checklist -->
+    <div id="passwordChecklist" class="password-checklist hidden">
+      <ul>
+        <li id="length">At least 8 characters</li>
+        <li id="uppercase">At least 1 uppercase letter</li>
+        <li id="symbol">At least 1 special symbol (!@#$%^&*)</li>
+        <li id="match">Passwords match</li>
+      </ul>
+    </div>
+
+    <div class="form-step">
+      <label for="confirm_password">Confirm Password</label>
+      <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm new password" required>
+    </div>
+    <button type="submit" class="btn">Reset Password</button>
+  </form>
+
+  <div class="auth-link">
+    <p><a href="{{ url_for('signin_page') }}">Back to Sign In</a></p>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/signup.js') }}"></script>
+{% endblock %}
+</div>

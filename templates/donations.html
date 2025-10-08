@@ -3,45 +3,60 @@
 {% block title %}All Donations{% endblock %}
 
 {% block content %}
-<main>
+<div id="swup" class="transition-fade">
+<main class="donations-page">
   <h1>All Donations</h1>
 
-  <!-- Search + Category filter -->
-  <form method="get" action="{{ url_for('donations_page') }}" style="margin-bottom: 1rem; align-items:center;">
-    <input 
-      type="text" 
-      name="q" 
-      placeholder="Search donations..." 
-      value="{{ search or '' }}" 
-      style="padding: 0.5rem; width: 60%; max-width: 300px;"
-    >
+  <form method="get" action="{{ url_for('donations_page') }}" class="filter-form-modern">
+    <!-- Search input -->
+    <div class="filter-input-wrapper">
+      <input 
+        type="text" 
+        name="q" 
+        placeholder="Search donations..." 
+        value="{{ search or '' }}" 
+        class="filter-input"
+      >
+    </div>
 
-    <select name="category" style="padding: 0.5rem;">
-      <option value="">All Categories</option>
-      {% for c in categories %}
-        <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
-      {% endfor %}
-    </select>
+    <!-- Category select -->
+    <div class="filter-select-wrapper">
+      <select name="category" class="filter-select">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-    <button type="submit" class="btn">Apply</button>
+    <!-- Apply button -->
+    <button type="submit" class="filter-btn">Apply</button>
   </form>
 
-  <div class="container">
-    {% for donation in donations %}
-      <div class="card" style="max-width: 30rem">
-        <img src="{{ url_for('static', filename=donation.image_url) if donation.image_url else url_for('static', filename='Images/placeholder.png') }}" class="card-image">
-        <h2 class="card-name">{{ donation.items }}</h2>
-        <p class="card-about">{{ donation.category }}</p>
-        <p><small>Donated on {{ donation.date_donated }}</small></p>
-        {% if user and user['role'] == "Recipient" %}
-          <form action="{{ url_for('claim_donation', donation_id=donation.donation_id) }}" method="POST">
-            <button type="submit" class="btn">Claim</button>
-          </form>
-        {% endif %}
-      </div>
-    {% else %}
-      <p>No donations found.</p>
-    {% endfor %}
-  </div>
+
+
+  <!-- Donations grid -->
+  {% if donations %}
+    <div class="donations-grid">
+      {% for donation in donations %}
+        <div class="donation-card">
+          <img src="{{ url_for('static', filename=donation.image_url) if donation.image_url else url_for('static', filename='Images/placeholder.png') }}" class="donation-image">
+          <h3 class="donation-title">{{ donation.items }}</h3>
+          <p class="donation-category">{{ donation.category }}</p>
+          <p class="donation-date"><small>Donated on {{ donation.date_donated }}</small></p>
+
+          {% if user and user['role'] == "Recipient" %}
+            <form action="{{ url_for('claim_donation', donation_id=donation.donation_id) }}" method="POST">
+              <button type="submit" class="claim-btn">Claim</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="no-donations">No donations found.</p>
+  {% endif %}
+
 </main>
+</div>
 {% endblock %}

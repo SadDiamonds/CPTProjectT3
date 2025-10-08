@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}Dashboard{% endblock %}
-
+<div id="swup" class="transition-fade">
 {% block content %}
 <main class="dashboard">
   <h1>Welcome, {{ user.name }}</h1>
@@ -25,3 +25,4 @@
   <a href="{{ url_for('home_page') }}" class="btn">Back to Home</a>
 </main>
 {% endblock %}
+</div>
