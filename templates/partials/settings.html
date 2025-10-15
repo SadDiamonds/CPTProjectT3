@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="scroll-container">
+  <div id="swup" class="transition-fade">
+  <main class="settings-page">
+    <!-- Header with Back Button -->
+    <div class="settings-header">
+      <h1>Account Settings</h1>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Back</a>
+    </div>
+    <p>Manage your profile information, password, and preferences.</p>
+
+    <div class="settings-container">
+      <!-- Update Profile Info -->
+      <section class="settings-section">
+        <h2>Profile Information</h2>
+        <form action="{{ url_for('update_profile') }}" method="post">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" value="{{ user.name }}" required>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" value="{{ user.email }}" required>
+
+          <button type="submit" class="btn">Save Changes</button>
+        </form>
+      </section>
+
+      <!-- Update Password -->
+      <section class="settings-section">
+        <h2>Change Password</h2>
+        <form action="{{ url_for('change_password') }}" method="post">
+          <label for="current_password">Current Password</label>
+          <input type="password" id="current_password" name="current_password" required>
+
+          <label for="new_password">New Password</label>
+          <input type="password" id="new_password" name="new_password" required>
+
+          <label for="confirm_password">Confirm New Password</label>
+          <input type="password" id="confirm_password" name="confirm_password" required>
+
+          <button type="submit" class="btn">Update Password</button>
+        </form>
+      </section>
+
+      <!-- Preferences -->
+      <section class="settings-section">
+        <h2>Preferences</h2>
+        <form action="{{ url_for('update_preferences') }}" method="post">
+          <label class="checkbox">
+            <input type="checkbox" name="notifications" {% if user.notifications_enabled %}checked{% endif %}>
+            Receive email notifications
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="public_profile" {% if user.public_profile %}checked{% endif %}>
+            Make my profile public
+          </label>
+
+          {% if user.role == "Recipient" %}
+            <hr>
+            <p>Select your preferred donation categories:</p>
+            <label><input type="checkbox" name="categories" value="Clothes" {% if 'Clothes' in saved_categories %}checked{% endif %}> Clothes</label><br>
+            <label><input type="checkbox" name="categories" value="Food" {% if 'Food' in saved_categories %}checked{% endif %}> Food</label><br>
+            <label><input type="checkbox" name="categories" value="Books" {% if 'Books' in saved_categories %}checked{% endif %}> Education</label><br>
+            <label><input type="checkbox" name="categories" value="Electronics" {% if 'Electronics' in saved_categories %}checked{% endif %}> Tech</label><br>
+            <label><input type="checkbox" name="categories" value="Furniture" {% if 'Furniture' in saved_categories %}checked{% endif %}> Furniture</label><br>
+            <label><input type="checkbox" name="categories" value="Medication" {% if 'Medication' in saved_categories %}checked{% endif %}> Medication</label><br>
+          {% endif %}
+
+          <button type="submit" class="btn">Save Preferences</button>
+        </form>
+      </section>
+
+      <!-- Danger Zone -->
+      <section class="settings-section danger-zone">
+        <h2>Danger Zone</h2>
+        <form action="{{ url_for('delete_account') }}" method="post" onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.')">
+          <button type="submit" class="btn-danger">Delete My Account</button>
+        </form>
+      </section>
+    </div>
+  </main>
+  </div>
+</div>
+{% endblock %}

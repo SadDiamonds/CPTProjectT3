@@ -3,60 +3,183 @@
 {% block title %}All Donations{% endblock %}
 
 {% block content %}
-<div id="swup" class="transition-fade">
-<main class="donations-page">
-  <h1>All Donations</h1>
+<div class="scroll-container">
+  <div id="swup" class="transition-fade">
+  <main class="donations-page">
+    <h1>All Donations</h1>
 
-  <form method="get" action="{{ url_for('donations_page') }}" class="filter-form-modern">
-    <!-- Search input -->
-    <div class="filter-input-wrapper">
-      <input 
-        type="text" 
-        name="q" 
-        placeholder="Search donations..." 
-        value="{{ search or '' }}" 
-        class="filter-input"
-      >
-    </div>
+    <form method="get" action="{{ url_for('donations_page') }}" class="filter-form-modern">
+      <!-- Search input -->
+      <div class="filter-input-wrapper">
+        <input 
+          type="text" 
+          name="q" 
+          placeholder="Search donations..." 
+          value="{{ search or '' }}" 
+          class="filter-input"
+        >
+      </div>
 
-    <!-- Category select -->
-    <div class="filter-select-wrapper">
-      <select name="category" class="filter-select">
-        <option value="">All Categories</option>
-        {% for c in categories %}
-          <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
+      <!-- Custom dropdown -->
+      <div class="custom-dropdown">
+        <button type="button" class="dropdown-toggle">
+          {{ category or 'All Categories' }}
+          <span class="arrow">▾</span>
+        </button>
+        <ul class="dropdown-menu">
+          <li data-value="" style="text-align:center">All Categories</li>
+          {% for c in categories %}
+          <li data-value="{{ c }}">{{ c }}</li>
+          {% endfor %}
+        </ul>
+        <input type="hidden" name="category" class="dropdown-value" value="{{ category or '' }}">
+      </div>
+      <br>
+
+      <!-- Apply button -->
+      <button type="submit" class="btn">Apply</button>
+    </form>
+
+
+
+    <!-- Donations grid -->
+    {% if donations %}
+      <div class="donations-grid">
+        {% for donation in donations %}
+          <div class="donation-card">
+            <img src="{{ url_for('static', filename=donation.image_url) if donation.image_url else url_for('static', filename='Images/placeholder.png') }}" class="donation-image">
+            <h3 class="donation-title">{{ donation.items }}</h3>
+            <p class="donation-category">{{ donation.category }}</p>
+            <p class="donation-date"><small>Donated on {{ donation.date_donated }}</small></p>
+
+            {% if user and user['role'] == "Recipient" %}
+              <form action="{{ url_for('claim_donation', donation_id=donation.donation_id) }}" method="POST">
+                <button type="submit" class="claim-btn">Claim</button>
+              </form>
+            {% endif %}
+          </div>
         {% endfor %}
-      </select>
-    </div>
-
-    <!-- Apply button -->
-    <button type="submit" class="filter-btn">Apply</button>
-  </form>
+      </div>
+    {% else %}
+      <p class="no-donations">No donations found.</p>
+    {% endif %}
 
 
+    <script>
+(function() {
+  // run only once
+  if (window._gratiaDropdownsInitialized) return;
+  window._gratiaDropdownsInitialized = true;
 
-  <!-- Donations grid -->
-  {% if donations %}
-    <div class="donations-grid">
-      {% for donation in donations %}
-        <div class="donation-card">
-          <img src="{{ url_for('static', filename=donation.image_url) if donation.image_url else url_for('static', filename='Images/placeholder.png') }}" class="donation-image">
-          <h3 class="donation-title">{{ donation.items }}</h3>
-          <p class="donation-category">{{ donation.category }}</p>
-          <p class="donation-date"><small>Donated on {{ donation.date_donated }}</small></p>
+  // Helper to set toggle label while preserving other markup (caret, icons)
+  function setToggleLabel(toggle, text) {
+    if (!toggle) return;
+    const labelEl = toggle.querySelector('.dropdown-label');
+    if (labelEl) { labelEl.textContent = text; return; }
+    for (const node of toggle.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.nodeValue = text;
+        return;
+      }
+    }
+    const span = document.createElement('span');
+    span.className = 'dropdown-label';
+    span.textContent = text;
+    toggle.insertBefore(span, toggle.firstChild);
+  }
 
-          {% if user and user['role'] == "Recipient" %}
-            <form action="{{ url_for('claim_donation', donation_id=donation.donation_id) }}" method="POST">
-              <button type="submit" class="claim-btn">Claim</button>
-            </form>
-          {% endif %}
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p class="no-donations">No donations found.</p>
-  {% endif %}
+  function closeAllMenus() {
+    document.querySelectorAll('.custom-dropdown .dropdown-menu').forEach(m => {
+      m.style.display = 'none';
+      const dd = m.closest('.custom-dropdown');
+      if (dd) dd.classList.remove('open');
+    });
+  }
 
-</main>
+  // Single delegated click handler
+  document.addEventListener('click', function(e) {
+    const toggle = e.target.closest('.dropdown-toggle');
+    const menuItem = e.target.closest('.dropdown-menu li');
+    const clickedInside = !!e.target.closest('.custom-dropdown');
+
+    if (toggle) {
+      // Toggle clicked: open/close this dropdown; close others
+      const dropdown = toggle.closest('.custom-dropdown');
+      if (!dropdown) return;
+      const menu = dropdown.querySelector('.dropdown-menu');
+      if (!menu) return;
+
+      const isOpen = menu.style.display === 'block' || dropdown.classList.contains('open');
+      if (isOpen) {
+        menu.style.display = 'none';
+        dropdown.classList.remove('open');
+      } else {
+        closeAllMenus();
+        menu.style.display = 'block';
+        dropdown.classList.add('open');
+      }
+      return;
+    }
+
+    if (menuItem) {
+      // Menu item clicked: set hidden value, update toggle label, mark selected
+      const dropdown = menuItem.closest('.custom-dropdown');
+      if (!dropdown) return;
+      const menu = dropdown.querySelector('.dropdown-menu');
+      const hiddenInput = dropdown.querySelector('.dropdown-value');
+      const toggleBtn = dropdown.querySelector('.dropdown-toggle');
+
+      if (hiddenInput) hiddenInput.value = menuItem.dataset.value ?? '';
+      setToggleLabel(toggleBtn, menuItem.textContent.trim());
+      menu.style.display = 'none';
+      dropdown.classList.remove('open');
+
+      menu.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+      menuItem.classList.add('selected');
+      return;
+    }
+
+    // Click outside any dropdown: close all
+    if (!clickedInside) closeAllMenus();
+  });
+
+  // On initial load, update any toggles to match pre-selected items
+  document.querySelectorAll('.custom-dropdown').forEach(dd => {
+    const sel = dd.querySelector('.dropdown-menu li.selected');
+    const toggleBtn = dd.querySelector('.dropdown-toggle');
+    const hidden = dd.querySelector('.dropdown-value');
+    if (sel) {
+      setToggleLabel(toggleBtn, sel.textContent.trim());
+      if (hidden) hidden.value = sel.dataset.value ?? '';
+    }
+  });
+
+  // If Swup is present, ensure we refresh toggle labels for newly injected dropdowns.
+  // (We do NOT reattach new event listeners — delegation already handles that.)
+  if (typeof Swup !== 'undefined') {
+    try {
+      const swupInstance = window.swup || new Swup();
+      swupInstance.hooks.on('page:view', function() {
+        document.querySelectorAll('.custom-dropdown').forEach(dd => {
+          const sel = dd.querySelector('.dropdown-menu li.selected');
+          const toggleBtn = dd.querySelector('.dropdown-toggle');
+          const hidden = dd.querySelector('.dropdown-value');
+          if (sel) {
+            setToggleLabel(toggleBtn, sel.textContent.trim());
+            if (hidden) hidden.value = sel.dataset.value ?? '';
+          }
+        });
+      });
+    } catch (err) {
+      console.warn('Swup hook skipped:', err);
+    }
+  }
+})();
+
+
+  </script>
+
+  </main>
+  </div>
 </div>
 {% endblock %}

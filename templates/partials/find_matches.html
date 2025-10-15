@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %}Find Donations{% endblock %}
+
+{% block content %}
+<div id="swup" class="transition-fade">
+  <main class ="matches-page">
+    <h1>Available Donations Near You</h1>
+
+    <div class="container">
+      {% if matches and matches|length > 0 %}
+        {% for donation in matches %}
+          <div class="card" style="max-width: 30rem">
+            <img 
+              src="{{ url_for('static', filename=donation.image_url or 'placeholder.png') }}" 
+              class="card-image"
+              alt="Donation Image"
+            >
+            <div class="card-body">
+              <h3>{{ donation.items }}</h3>
+              <p><strong>Category:</strong> {{ donation.category }}</p>
+              <p><strong>Location:</strong> {{ donation.location }}</p>
+              <p><strong>Donor:</strong> {{ donation.donor_name }}</p>
+
+              <form 
+                action="{{ url_for('request_match', donation_id=donation.donation_id) }}" 
+                method="POST"
+              >
+                <button class="btn success" type="submit">Request Donation</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="no-matches">
+          <p>No available donations near your area.</p>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

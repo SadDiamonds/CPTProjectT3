@@ -1,36 +1,31 @@
-{% extends "layout.html" %}
-{% block title %}Profile{% endblock %}
-<div id="swup" class="transition-fade">
-{% block content %}
-<main>
-  <h1>{{ profile_user.name }}’s Profile</h1>
-  <p>Role: {{ profile_user.role }}</p>
-  <p>Joined: {{ creation_str }}</p>
+<main class="profile-page">
+  <section class="profile-header">
+    <h1>{{ profile_user.name }}</h1>
+    <p>{{ profile_user.role }}</p>
+    <p>Joined {{ creation_str }}</p>
+  </section>
 
-  <h2>Badges</h2>
-  <div class="badges">
-    {% if badges %}
+  <section class="profile-section">
+    <h2>Badges</h2>
+    <div class="badges-grid">
       {% for badge in badges %}
-        <div class="badge">
-          <img src="{{ url_for('static', filename='badges/' ~ badge.icon) }}" alt="{{ badge.name }}">
-          <p>{{ badge.name }}</p>
-        </div>
+      <div class="badge-card">
+        <img src="{{ url_for('static', filename='badges/' ~ badge.icon) }}" alt="{{ badge.name }}">
+        <span>{{ badge.name }}</span>
+      </div>
       {% endfor %}
-    {% else %}
-      <p>No badges earned yet. Keep participating!</p>
-    {% endif %}
-  </div>
+    </div>
+  </section>
 
-  <div class="profile-rating">
-    <h2>Average Rating: {{ avg_rating|round(1) }}/5 ⭐</h2>
-    <ul>
+  <section class="profile-section">
+    <h2>Ratings</h2>
+    <div class="ratings-list">
       {% for r in ratings %}
-        <li>
-          <strong>{{ r.rater_name }}</strong>: {{ r.rating }}⭐ – "{{ r.comment }}"
-        </li>
+      <div class="rating-card">
+        <p><strong>{{ r.rater_name }}</strong> – {{ r.rating }}⭐</p>
+        <p>"{{ r.comment }}"</p>
+      </div>
       {% endfor %}
-    </ul>
-  </div>
+    </div>
+  </section>
 </main>
-{% endblock %}
-</div>

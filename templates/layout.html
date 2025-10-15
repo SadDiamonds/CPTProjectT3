@@ -1,34 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
   <meta charset="UTF-8">
   <title>{% block title %}Gratia{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <nav>
-    {% if not user %}
-      <a href="{{ url_for('landing_page') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
-    {% else %}
-      <a href="{{ url_for('donations_page') }}"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
-    {% endif %}
-    <ul>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      {% if not user %}
+        <a href="{{ url_for('landing_page') }}" class="logo-link"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
+      {% else %}
+        <a href="{{ url_for('dashboard') }}" class="logo-link"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Gratia Logo" class="logo"></a>
+      {% endif %}
+    </div>
+    <ul class="nav-links">
       {% if not user %}
         <li><a href="{{ url_for('landing_page') }}">Home</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
         <li><a href="{{ url_for('signin_page') }}">Sign In</a></li>
-      {% endif %}
-      {% if user %}
-        <li><a href="{{ url_for('donations_page') }}">Home</a></li>
+      {% else %}
+        <li><a href="{{ url_for('dashboard') }}">Home</a></li>
         <li><a href="{{ url_for('about') }}">About</a></li>
-        <li><a href="{{ url_for('add') }}">Add Donation</a></li>
-        <li><a href="{{ url_for('dashboard')}}">Dashboard</a></li>
-        {% if user['role'] == "Donor"%}
-          <li><a href="{{ url_for('matches') }}">My Donations</a></li>
-        {% endif %}
-        {% if user['role'] == "Recipient"%}
+        <li><a href="{{ url_for('donations_page') }}">All Donations</a></li>
+        {% if user['role'] != 'Donor' %}
           <li><a href="{{ url_for('matches') }}">My Requests</a></li>
         {% endif %}
         <li><a href="{{ url_for('profile', user_id=user['user_id']) }}">Profile</a></li>
@@ -37,10 +36,41 @@
     </ul>
   </nav>
 
+  {% if user %}
+  <!-- Notification Sidebar -->
+    <div id="notif-sidebar" class="notif-sidebar">
+      <div class="notif-header">
+        <h3>Notifications</h3>
+        <span id="notif-close">&times;</span>
+      </div>
+      <div class="notif-list" id="notif-list">
+        {% for n in notifications %}
+          <div class="notif-item" data-time="{{ n.created_at }}">
+            <p>{{ n.message }}</p>
+            <span class="notif-time"></span>
+          </div>
+        {% else %}
+          <div class="notif-item">
+            <p>No notifications yet.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <button id="notif-toggle" class="notif-toggle">
+      &#10095;
+      {% if notif_count > 0 %}
+        <span class="notif-dot"></span>
+      {% endif %}
+    </button>
+  {%else%}
+  <br>
+  {%endif%}
+
   <!-- Flash messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="flash-messages">
+      <div class="flash-container">
         {% for category, message in messages %}
           <div class="flash {{ category }}">{{ message }}</div>
         {% endfor %}
@@ -48,12 +78,52 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Swup container -->
+  <!-- Main content -->
   <div id="swup" class="transition-fade">
     {% block content %}{% endblock %}
   </div>
 
   <script src="https://unpkg.com/swup@4"></script>
   <script src="{{ url_for('static', filename='js/swup-init.js') }}"></script>
+  <script>
+function timeAgo(timestamp) {
+  const now = new Date();
+  const notifDate = new Date(timestamp);
+  const diff = Math.floor((now - notifDate) / 1000); // seconds
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+document.querySelectorAll(".notif-item").forEach(item => {
+  const ts = item.dataset.time;
+  if (ts) {
+    item.querySelector(".notif-time").textContent = timeAgo(ts);
+  }
+});
+
+const sidebar = document.getElementById("notif-sidebar");
+const toggle = document.getElementById("notif-toggle");
+const closeBtn = document.getElementById("notif-close");
+
+toggle.addEventListener("click", () => {
+  const isOpen = sidebar.classList.toggle("open");
+  toggle.classList.toggle("open", isOpen);
+
+  // mark notifications as read
+  if (isOpen) {
+    fetch("/notifications/mark_read", { method: "POST" });
+    const dot = toggle.querySelector(".notif-dot");
+    if (dot) dot.style.display = "none";
+  }
+});
+
+closeBtn.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  toggle.classList.remove("open");
+});
+
+  </script>
 </body>
 </html>

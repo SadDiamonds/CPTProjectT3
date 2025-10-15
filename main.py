@@ -17,9 +17,62 @@ from flask import (
     g,
     session,
     current_app,
+    jsonify,
 )
 from datetime import datetime
 from functools import wraps
+
+
+class User:
+    def __init__(self, row):
+        self.user_id = row["user_id"]
+        self.name = row["name"]
+        self.email = row["email"]
+        self.password = row["password"]
+        self.role = row["role"]
+        self.creation_date = row["creation_date"]
+        # Use .get with default
+        self.notifications_enabled = (
+            bool(row["notifications_enabled"])
+            if "notifications_enabled" in row.keys()
+            else False
+        )
+        self.public_profile = (
+            bool(row["public_profile"]) if "public_profile" in row.keys() else False
+        )
+
+    # Save profile & preferences to DB
+    def save(self):
+        db = get_db()
+        db.execute(
+            """
+            UPDATE Users SET name=?, email=?, password=?, notifications_enabled=?, public_profile=?
+            WHERE user_id=?
+            """,
+            (
+                self.name,
+                self.email,
+                self.password,
+                int(self.notifications_enabled),
+                int(self.public_profile),
+                self.user_id,
+            ),
+        )
+        db.commit()
+
+    # Delete user
+    def delete(self):
+        db = get_db()
+        db.execute("DELETE FROM Users WHERE user_id=?", (self.user_id,))
+        db.commit()
+
+AU_SUBURBS = {
+    "Sydney": ["Bondi", "Manly", "Parramatta", "Chatswood"],
+    "Melbourne": ["Fitzroy", "St Kilda", "South Yarra", "Brunswick"],
+    "Brisbane": ["Fortitude Valley", "South Bank", "West End"],
+    "Perth": ["Fremantle", "Subiaco", "Cottesloe"],
+    "Adelaide": ["North Adelaide", "Glenelg", "Norwood"],
+}
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
@@ -51,12 +104,15 @@ def close_connection(exception):
 def allowed_file(filename): 
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def current_user():
     if "user_id" in session:
         db = get_db()
-        return db.execute(
+        row = db.execute(
             "SELECT * FROM Users WHERE user_id=?", (session["user_id"],)
         ).fetchone()
+        if row:
+            return User(row)
     return None
 
 
@@ -74,7 +130,7 @@ def login_required(f):
 @app.route("/")
 def root_redirect():
     if "user_id" in session:
-        return redirect(url_for("donations_page"))
+        return redirect(url_for("dashboard"))
     else:
         return redirect(url_for("landing_page"))
 
@@ -106,7 +162,7 @@ def forgot_password():
 
             db.execute(
                 "INSERT INTO PasswordResetTokens (user_id, token_hash, created_at, expires_at) VALUES (?, ?, ?, ?)",
-                (user["user_id"], token_hash, now, expires_at),
+                (user.user_id, token_hash, now, expires_at),
             )
             db.commit()
 
@@ -197,7 +253,7 @@ def signup_page():
         db = get_db()
         try:
             db.execute(
-                "INSERT INTO Users (user_id, name, email, password, role, creation_date) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO Users (user_id, name, email, password, role, creation_date) VALUES (?, ?, ?, ?, ?), ?",
                 (user_id, name, email, hashed, role, creation_date),
             )
             db.commit()
@@ -216,6 +272,32 @@ def signup_page():
     return render_template("partials/signup.html", user=current_user())
 
 
+# ----------------- PREFERENCES (for new recipients) -----------------
+@app.route("/preferences", methods=["GET", "POST"])
+def preferences_page():
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Please sign in first.", "error")
+        return redirect(url_for("signin_page"))
+
+    db = get_db()
+
+    if request.method == "POST":
+        preferred_category = request.form.get("preferred_category")
+        preferred_city = request.form.get("preferred_city")
+
+        db.execute(
+            "INSERT OR REPLACE INTO Preferences (user_id, preferred_category, preferred_city) VALUES (?, ?, ?)",
+            (user_id, preferred_category, preferred_city),
+        )
+        db.commit()
+
+        flash("Preferences saved!", "success")
+        return redirect(url_for("donations_page"))
+
+    return render_template("partials/preferences.html")
+
+
 # ----------------- SIGN IN -----------------
 @app.route("/signin", methods=["GET", "POST"])
 def signin_page():
@@ -224,48 +306,18 @@ def signin_page():
         password = request.form.get("password")
 
         db = get_db()
-        user = db.execute("SELECT * FROM Users WHERE email=?", (email,)).fetchone()
+        row = db.execute("SELECT * FROM Users WHERE email=?", (email,)).fetchone()
+        user = User(row) if row else None
 
-        if user and check_password_hash(user["password"], password):
-            session["user_id"] = user["user_id"]
-            flash(f"Welcome back, {user['name']}!", "success")
-            return redirect(url_for("donations_page"))
+        if user and check_password_hash(user.password, password):
+            session["user_id"] = user.user_id
+            flash(f"Welcome back, {user.name}!", "success")
+            return redirect(url_for("dashboard"))
         else:
             flash("Invalid credentials", "error")
             return redirect(url_for("signin_page"))
 
     return render_template("partials/signin.html", user=current_user())
-
-
-# ----------------- HOME (donations listing) -----------------
-@app.route("/home")
-@login_required
-def home_page():
-    db = get_db()
-    user = current_user()
-    
-    search = request.args.get("q", "").strip()
-    search_pattern = f"%{search}%" if search else "%"
-
-    if user["role"] == "Donor":
-        donations = db.execute(
-            "SELECT * FROM Donations WHERE donor_id = ? AND (items LIKE ? OR category LIKE ?) ORDER BY donation_id DESC",
-            (user["user_id"],search_pattern, search_pattern),
-        ).fetchall()
-    else:
-        # For recipients: show donations that are NOT already claimed in matches_ex
-        donations = db.execute(
-            """
-            SELECT * FROM Donations d
-            WHERE d.donation_id NOT IN (SELECT donation_id FROM matches_ex)
-            AND (d.items LIKE ? OR d.category LIKE ?)
-            ORDER BY d.donation_id DESC
-            LIMIT 6
-            """,
-            (search_pattern, search_pattern),
-        ).fetchall()
-
-    return render_template("home.html", user=user, donations=donations, search=search)
 
 
 # ----------------- MATCHES (list user's matches) -----------------
@@ -275,7 +327,7 @@ def matches():
     db = get_db()
     user = current_user()
 
-    if user["role"] == "Donor":
+    if user.role == "Donor":
         # Donor: show all matches where donor_id = current user
         matches = db.execute(
             """
@@ -291,7 +343,7 @@ def matches():
             WHERE m.donor_id = ?
             ORDER BY m.match_id DESC
         """,
-            (user["user_id"], user["user_id"]),
+            (user.user_id, user.user_id),
         ).fetchall()
 
     else:
@@ -310,10 +362,89 @@ def matches():
             WHERE m.recipient_id = ? AND m.status != 'Rejected'
             ORDER BY m.match_id DESC
         """,
-            (user["user_id"], user["user_id"]),
+            (user.user_id, user.user_id),
         ).fetchall()
 
     return render_template("partials/matches.html", matches=matches, user=user)
+
+# ----------------- FIND MATCHES (for recipients to find donations) -----------------
+@app.route("/find_matches")
+@login_required
+def find_matches():
+    user = current_user()
+    db = get_db()
+
+    if user.role != "Recipient":
+        flash("Only recipients can search for matches.", "error")
+        return redirect(url_for("dashboard"))
+
+    # Find available donations by category & location
+    matches = db.execute(
+        """
+        SELECT d.*, u.name AS donor_name
+        FROM Donations d
+        JOIN Users u ON d.donor_id = u.user_id
+        WHERE d.category = (
+            SELECT preferred_category 
+            FROM Users 
+            WHERE user_id = ?
+        )
+        ORDER BY d.donation_id DESC
+        """,
+        (user.user_id,),
+    ).fetchall()
+
+    return render_template("partials/find_matches.html", matches=matches, user=user)
+
+
+@app.route("/request_match/<donation_id>", methods=["POST"])
+@login_required
+def request_match(donation_id):
+    user = current_user()
+    db = get_db()
+
+    if user.role != "Recipient":
+        flash("Only recipients can request donations.", "error")
+        return redirect(url_for("dashboard"))
+
+    donation = db.execute(
+        "SELECT * FROM Donations WHERE donation_id = ?", (donation_id,)
+    ).fetchone()
+    if not donation:
+        flash("Donation not found.", "error")
+        return redirect(url_for("find_matches"))
+
+    db.execute(
+        """
+        INSERT INTO matches_ex (donation_id, donor_id, recipient_id, status)
+        VALUES (?, ?, ?, 'Pending')
+    """,
+        (donation["donation_id"], donation["donor_id"], user.user_id),
+    )
+    db.commit()
+
+    # Update donation status
+    db.execute(
+        "UPDATE Donations SET status = 'Pending' WHERE donation_id = ?",
+        (donation["donation_id"],),
+    )
+    db.commit()
+
+    # Add notification
+    db.execute(
+        """
+        INSERT INTO Notifications (user_id, message, created_at)
+        VALUES (?, ?, datetime('now'))
+    """,
+        (
+            donation["donor_id"],
+            f"{user.name} has requested your donation ({donation['items']})",
+        ),
+    )
+    db.commit()
+
+    flash("Request sent successfully!", "success")
+    return redirect(url_for("matches"))
 
 
 # ----------------- ABOUT -----------------
@@ -339,10 +470,10 @@ def add():
             image_file.save(image_path) 
             image_filename = f"uploads/{filename}" 
             db = get_db() 
-            db.execute( "INSERT INTO Donations (donor_id, category, items, date_donated, image_url) VALUES (?, ?, ?, ?, ?)", (user["user_id"], category, items, date_donated, image_filename), ) 
+            db.execute( "INSERT INTO Donations (donation_id, donor_id, category, items, date_donated, image_url) VALUES (?, ?, ?, ?, ?, ?)", (user.user_id, category, items, date_donated, image_filename), ) 
             db.commit() 
             flash("Donation added!", "success") 
-        return redirect(url_for("home_page")) 
+        return redirect(url_for("dashboard")) 
     return render_template("partials/add.html", user=user)
 # uhhhh
 
@@ -367,16 +498,16 @@ def claim_donation(donation_id):
     db = get_db()
     user = current_user()
 
-    if user["role"] != "Recipient":
+    if user.role != "Recipient":
         flash("Only recipients can claim donations.", "error")
-        return redirect(url_for("home_page"))
+        return redirect(url_for("dashboard"))
 
     donation = db.execute(
         "SELECT donor_id FROM Donations WHERE donation_id = ?", (donation_id,)
     ).fetchone()
     if not donation:
         flash("Donation not found.", "error")
-        return redirect(url_for("home_page"))
+        return redirect(url_for("dashboard"))
 
     # Check existing in matches_ex (use matches_ex table)
     existing = db.execute(
@@ -390,7 +521,7 @@ def claim_donation(donation_id):
     # Insert into matches_ex
     db.execute(
         "INSERT INTO matches_ex (donation_id, recipient_id, donor_id, status, donor_completed, recipient_completed) VALUES (?, ?, ?, ?, ?, ?)",
-        (donation_id, user["user_id"], donation["donor_id"], "Pending", 0, 0),
+        (donation_id, user.user_id, donation["donor_id"], "Pending", 0, 0),
     )
     db.commit()
 
@@ -405,14 +536,14 @@ def update_match_status(match_id, status):
     db = get_db()
     user = current_user()
 
-    if user["role"] != "Donor":
+    if user.role != "Donor":
         flash("Only donors can update match status.", "error")
         return redirect(url_for("matches"))
 
     # Only update matches_ex
     db.execute(
         "UPDATE matches_ex SET status = ? WHERE match_id = ? AND donor_id = ?",
-        (status, match_id, user["user_id"]),
+        (status, match_id, user.user_id),
     )
     db.commit()
 
@@ -436,11 +567,11 @@ def complete_match(match_id):
         return redirect(url_for("matches"))
 
     # Only donor or recipient may mark completed
-    if user["user_id"] == match["donor_id"]:
+    if user.user_id == match["donor_id"]:
         db.execute(
             "UPDATE matches_ex SET donor_completed = 1 WHERE match_id = ?", (match_id,)
         )
-    elif user["user_id"] == match["recipient_id"]:
+    elif user.user_id == match["recipient_id"]:
         db.execute(
             "UPDATE matches_ex SET recipient_completed = 1 WHERE match_id = ?",
             (match_id,),
@@ -481,7 +612,7 @@ def rate(match_id):
     # Prevent duplicate rating by same rater for this match
     already = db.execute(
         "SELECT * FROM Ratings WHERE match_id = ? AND rater_id = ?",
-        (match_id, user["user_id"]),
+        (match_id, user.user_id),
     ).fetchone()
     if already:
         flash("You have already rated this match.", "warning")
@@ -491,11 +622,11 @@ def rate(match_id):
         try:
             rating = int(request.form.get("rating"))
             comment = request.form.get("comment") or ""
-            rater_id = user["user_id"]
+            rater_id = user.user_id
             # who is being rated?
             rated_id = (
                 match["donor_id"]
-                if user["role"] == "Recipient"
+                if user.role == "Recipient"
                 else match["recipient_id"]
             )
 
@@ -537,9 +668,14 @@ def profile(user_id):
         "SELECT r.rating, r.comment, u.name as rater_name FROM Ratings r JOIN Users u ON r.rater_id = u.user_id WHERE r.rated_id=?",
         (user_id,),
     ).fetchall()
-    avg_rating = db.execute(
+    avg_row = db.execute(
         "SELECT AVG(rating) as avg FROM Ratings WHERE rated_id=?", (user_id,)
-    ).fetchone()["avg"]
+    ).fetchone()
+
+    if avg_row and avg_row["avg"] is not None:
+        avg_rating = round(avg_row["avg"], 1)
+    else:
+        avg_rating = 0
 
     badges = db.execute(
         """
@@ -569,26 +705,75 @@ def dashboard():
     db = get_db()
     user = current_user()
 
-    if user["role"] == "Donor":
+    # Stats
+    if user.role == "Donor":
         stats = db.execute(
             """SELECT 
                     COUNT(*) as total_donations,
                     SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Completed') THEN 1 ELSE 0 END) as completed_donations,
                     SUM(CASE WHEN donation_id IN (SELECT donation_id FROM matches_ex WHERE status = 'Pending') THEN 1 ELSE 0 END) as pending_matches
-            FROM Donations WHERE donor_id = ?""",
-            (user["user_id"],),
+                FROM Donations WHERE donor_id = ?""",
+            (user.user_id,),
         ).fetchone()
+
+        # Recent activity: last 5 donations with status
+        recent = db.execute(
+            """SELECT d.items, COALESCE(m.status, 'Not Requested') as status
+                FROM Donations d
+                LEFT JOIN matches_ex m ON d.donation_id = m.donation_id
+                WHERE d.donor_id = ?
+                ORDER BY d.donation_id DESC
+                LIMIT 5""",
+            (user.user_id,),
+        ).fetchall()
+
     else:
         stats = db.execute(
             """SELECT 
                     COUNT(*) as total_claims,
                     SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_claims,
                     SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending_claims
-            FROM matches_ex WHERE recipient_id = ?""",
-            (user["user_id"],),
+                FROM matches_ex WHERE recipient_id = ?""",
+            (user.user_id,),
         ).fetchone()
 
-    return render_template("partials/dashboard.html", user=user, stats=stats)
+        # Recent activity: last 5 requests
+        recent = db.execute(
+            """SELECT d.items, m.status
+                FROM matches_ex m
+                JOIN Donations d ON m.donation_id = d.donation_id
+                WHERE m.recipient_id = ?
+                ORDER BY m.match_id DESC
+                LIMIT 5""",
+            (user.user_id,),
+        ).fetchall()
+
+    # Get account creation date for display
+    creation_str = ""
+    try:
+        dt = datetime.strptime(user.creation_date.strip(), "%d/%m/%y %H:%M:%S")
+        creation_str = dt.strftime("%d %B %Y")
+    except Exception:
+        creation_str = user.creation_date if hasattr(user, "creation_date") else ""
+
+    print("DEBUG — User attributes:", vars(user))
+
+    # Average rating
+    avg_row = db.execute(
+        "SELECT AVG(rating) as avg FROM Ratings WHERE rated_id=?", (user.user_id,)
+    ).fetchone()
+    avg_rating = (
+        round(avg_row["avg"], 1) if avg_row and avg_row["avg"] is not None else 0
+    )
+
+    return render_template(
+        "partials/dashboard.html",
+        user=user,
+        stats=stats,
+        recent=recent,
+        creation_str=creation_str,
+        avg_rating=avg_rating,
+    )
 
 
 # ----------------- DONATION PAGE -----------------
@@ -633,6 +818,153 @@ def donations_page():
         category=category,
         categories=[c["category"] for c in categories],
     )
+
+
+# ----------------- Settings ------------------
+@app.route("/settings")
+@login_required
+def settings():
+    user = current_user()    
+    db= get_db()
+    saved_categories = []
+    if user.role == "Recipient":
+        rows = db.execute(
+            "SELECT category FROM Preferences WHERE user_id = ?",
+            (user.user_id,),
+        ).fetchall()
+        saved_categories = [row["category"] for row in rows]
+    return render_template("partials/settings.html", user=user, saved_categories=saved_categories)
+
+
+@app.route("/update_profile", methods=["POST"])
+def update_profile():
+    user = current_user()
+    name = request.form.get("name")
+    email = request.form.get("email")
+
+    if not name or not email:
+        flash("Name and Email cannot be empty.", "error")
+        return redirect(url_for("settings"))
+
+    user.name = name
+    user.email = email
+    user.save()  # save to DB
+    flash("Profile updated successfully!", "success")
+    return redirect(url_for("settings"))
+
+
+@app.route("/change_password", methods=["POST"])
+def change_password():
+    user = current_user()
+    current_password = request.form.get("current_password")
+    new_password = request.form.get("new_password")
+    confirm_password = request.form.get("confirm_password")
+
+    if not check_password_hash(user.password, current_password):
+        flash("Current password is incorrect.", "error")
+        return redirect(url_for("settings"))
+
+    if new_password != confirm_password:
+        flash("New passwords do not match.", "error")
+        return redirect(url_for("settings"))
+
+    user.password = generate_password_hash(new_password)
+    user.save()
+    flash("Password updated successfully!", "success")
+    return redirect(url_for("settings"))
+
+
+@app.route("/update_preferences", methods=["POST"])
+def update_preferences():
+    user = current_user()
+
+    # Save normal preferences
+    user.notifications_enabled = "notifications" in request.form
+    user.public_profile = "public_profile" in request.form
+    user.save()
+
+    db = get_db()
+
+    # Only apply category preferences for Recipients
+    if user.role == "Recipient":
+        selected_categories = request.form.getlist("categories")
+
+        # Clear old preferences
+        db.execute("DELETE FROM Preferences WHERE user_id = ?", (user.user_id,))
+
+        # Save new selected ones
+        for category in selected_categories:
+            db.execute(
+                "INSERT INTO Preferences (user_id, category) VALUES (?, ?)",
+                (user.user_id, category),
+            )
+
+        db.commit()
+
+    flash("Preferences updated!", "success")
+    return redirect(url_for("settings"))
+
+
+@app.route("/delete_account", methods=["POST"])
+def delete_account():
+    user = current_user()
+    # Optional: log them out first
+    session.clear()
+    user.delete()  # remove from DB
+    flash("Your account has been deleted.", "success")
+    return redirect(url_for("landing_page"))
+
+
+# ----------------- Notification ------------------
+@app.context_processor
+def inject_notifications():
+    user = current_user()
+    notifications = []
+    unread_count = 0
+    if user:
+        db = get_db()
+        notifications = db.execute(
+            "SELECT * FROM Notifications WHERE user_id=? ORDER BY created_at DESC",
+            (user.user_id,),
+        ).fetchall()
+        unread_count = sum(1 for n in notifications if n["read"] == 0)
+    return dict(notifications=notifications, notif_count=unread_count)
+
+@app.route("/notifications")
+def get_notifications():
+    user = current_user()
+    db = get_db()
+    notifications = db.execute(
+        "SELECT message, created_at, read FROM Notifications WHERE user_id=? ORDER BY created_at DESC",
+        (user.user_id,),
+    ).fetchall()
+
+    # Convert to list of dicts
+    notif_list = [
+        {"message": n["message"], "created_at": n["created_at"], "read": n["read"]}
+        for n in notifications
+    ]
+    return jsonify(notif_list)
+
+def create_notification(user_id, message):
+    db = get_db()
+    notif_id = str(uuid.uuid4())
+    db.execute(
+        "INSERT INTO Notifications (id, user_id, message) VALUES (?, ?, ?)",
+        (notif_id, user_id, message)
+    )
+    db.commit()
+
+
+@app.route("/notifications/mark_read", methods=["POST"])
+def mark_notifications_read():
+    user = current_user()
+    if not user:
+        return "", 403
+    db = get_db()
+    db.execute("UPDATE Notifications SET read=1 WHERE user_id=?", (user.user_id,))
+    db.commit()
+    return "", 204
 
 
 # ----------------- run -----------------

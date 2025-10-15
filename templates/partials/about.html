@@ -1,53 +1,65 @@
 {% extends "layout.html" %}
 
 {% block title %}About Us - Gratia{% endblock %}
-<div id="swup" class="transition-fade">
+
 {% block content %}
-<main>
-  <h1><center>About Gratia</center></h1>
+<div class="scroll-container">
+  <div id="swup" class="transition-fade">
+  <main>
+    <h1><center>About Gratia</center></h1>
 
-  <div class="about-container">
-    <p>
-      Gratia is a community-driven donation platform designed to connect donors and recipients seamlessly. 
-      Our goal is to make giving simple, transparent, and impactful by matching those who want to give with 
-      those who truly need it.
-    </p>
+    <div class="about-container">
+      <p>
+        Gratia is a community-driven donation platform designed to connect donors and recipients seamlessly. 
+        Our goal is to make giving simple, transparent, and impactful by matching those who want to give with 
+        those who truly need it.
+      </p>
 
-    <p>
-      We believe that generosity has the power to transform communities. Whether it’s clothes, food, or 
-      essential supplies, every donation counts and Gratia ensures each one reaches the right hands 
-      through a fair and secure process.
-    </p>
+      <p>
+        We believe that generosity has the power to transform communities. Whether it’s clothes, food, or 
+        essential supplies, every donation counts and Gratia ensures each one reaches the right hands 
+        through a fair and secure process.
+      </p>
+    </div>
+
+    <div class="container">
+      <div class="card" >
+        <img src="{{ url_for('static', filename='Images/placeholder.png') }}" class="card-image" alt="Mission">
+        <div class="card-name">Our Mission</div>
+        <p class="card-about">
+          To empower generosity by building a trusted bridge between donors and recipients, fostering 
+          compassion and sustainable giving within every community.
+        </p>
+      </div>
+
+      <div class="card" >
+        <img src="{{ url_for('static', filename='Images/placeholder.png') }}" class="card-image" alt="Impact">
+        <div class="card-name">Our Impact</div>
+        <p class="card-about">
+          Since our founding, we’ve connected countless individuals through donations that make a tangible 
+          difference — turning unused items into meaningful change.
+        </p>
+      </div>
+
+      <div class="card" >
+        <img src="{{ url_for('static', filename='Images/placeholder.png') }}" class="card-image" alt="Community">
+        <div class="card-name">Our Community</div>
+        <p class="card-about">
+          Gratia thrives on kindness. Every donor, volunteer, and recipient contributes to a growing network 
+          built on empathy, respect, and shared purpose.
+        </p>
+      </div>
+    </div>
+
+    <br>
+    <br>
+    <br>
+    <br><br>
+    <br><br>
+    <br><br>
+    <br><br>
+
+  </main>
   </div>
-
-  <div class="container">
-    <div class="card" >
-      <img src="{{ url_for('static', filename='Images/placeholder.png') }}" class="card-image" alt="Mission">
-      <div class="card-name">Our Mission</div>
-      <p class="card-about">
-        To empower generosity by building a trusted bridge between donors and recipients, fostering 
-        compassion and sustainable giving within every community.
-      </p>
-    </div>
-
-    <div class="card" >
-      <img src="{{ url_for('static', filename='Images/placeholder.png') }}" class="card-image" alt="Impact">
-      <div class="card-name">Our Impact</div>
-      <p class="card-about">
-        Since our founding, we’ve connected countless individuals through donations that make a tangible 
-        difference — turning unused items into meaningful change.
-      </p>
-    </div>
-
-    <div class="card" >
-      <img src="{{ url_for('static', filename='Images/placeholder.png') }}" class="card-image" alt="Community">
-      <div class="card-name">Our Community</div>
-      <p class="card-about">
-        Gratia thrives on kindness. Every donor, volunteer, and recipient contributes to a growing network 
-        built on empathy, respect, and shared purpose.
-      </p>
-    </div>
-  </div>
-</main>
-{% endblock %}
 </div>
+{% endblock %}
