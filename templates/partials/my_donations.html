@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}My Donations{% endblock %}
+
+{% block content %}
+<div id="swup" class="transition-fade">
+  <main class="dashboard">
+    <h1>My Donations</h1>
+
+    <div class="container">
+      {% if donations %}
+        {% for donation in donations %}
+          <div class="card" style="max-width: 30rem">
+            <img src="{{ url_for('static', filename=donation.image_url or 'placeholder.png') }}" class="card-image" alt="Donation Image">
+            <div class="card-body">
+              <h3>{{ donation.items }}</h3>
+              <p><strong>Category:</strong> {{ donation.category }}</p>
+              <p><strong>Status:</strong> {{ donation.status }}</p>
+              {% if donation.status == "Requested" %}
+                <p><strong>Requested by:</strong> {{ donation.recipient_name }}</p>
+                <form action="{{ url_for('mark_donated', donation_id=donation.donation_id) }}" method="POST">
+                  <button class="btn success" type="submit">Mark as Donated</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>You haven't added any donations yet.</p>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

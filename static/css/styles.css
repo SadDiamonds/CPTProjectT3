@@ -1309,3 +1309,14 @@ body {
   font-style: italic;
   color: #555;
 }
+
+.status-text {
+  display: inline-block;
+  /* keeps it inline but allows styling */
+  text-align: left;
+  /* align text left */
+  width: auto;
+  /* shrink to content */
+  margin: 0;
+  color:orange;
+}

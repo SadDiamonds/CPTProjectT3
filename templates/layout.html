@@ -85,24 +85,60 @@
 
   <script src="https://unpkg.com/swup@4"></script>
   <script src="{{ url_for('static', filename='js/swup-init.js') }}"></script>
-  <script>
+<script>
 function timeAgo(timestamp) {
   const now = new Date();
   const notifDate = new Date(timestamp);
-  const diff = Math.floor((now - notifDate) / 1000); // seconds
+  const diff = Math.floor((now - notifDate) / 1000);
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-document.querySelectorAll(".notif-item").forEach(item => {
-  const ts = item.dataset.time;
-  if (ts) {
-    item.querySelector(".notif-time").textContent = timeAgo(ts);
+function renderNotifications(notifications) {
+  const list = document.getElementById("notif-list");
+  list.innerHTML = "";
+  if (notifications.length === 0) {
+    list.innerHTML = `<div class="notif-item"><p>No notifications yet.</p></div>`;
+    return;
   }
-});
+  notifications.forEach(n => {
+    const div = document.createElement("div");
+    div.className = "notif-item";
+    div.dataset.id = n.id;
+    div.dataset.time = n.created_at;
+    div.innerHTML = `<p>${n.message}</p><span class="notif-time">${timeAgo(n.created_at)}</span>`;
+    list.appendChild(div);
+  });
+}
 
+async function fetchNotifications() {
+  const res = await fetch("/notifications");
+  const data = await res.json();
+  renderNotifications(data);
+
+  // update unread dot
+  const unread = data.filter(n => n.read === 0).length;
+  const dot = document.querySelector(".notif-dot");
+  if (dot) dot.style.display = unread > 0 ? "block" : "none";
+
+  // update time ago dynamically
+  document.querySelectorAll(".notif-item").forEach(item => {
+    const ts = item.dataset.time;
+    if (ts) {
+      item.querySelector(".notif-time").textContent = timeAgo(ts);
+    }
+  });
+}
+
+// Initial fetch
+fetchNotifications();
+
+// Auto-refresh every 15 seconds
+setInterval(fetchNotifications, 15000);
+
+// Sidebar toggle
 const sidebar = document.getElementById("notif-sidebar");
 const toggle = document.getElementById("notif-toggle");
 const closeBtn = document.getElementById("notif-close");
@@ -111,19 +147,15 @@ toggle.addEventListener("click", () => {
   const isOpen = sidebar.classList.toggle("open");
   toggle.classList.toggle("open", isOpen);
 
-  // mark notifications as read
-  if (isOpen) {
-    fetch("/notifications/mark_read", { method: "POST" });
-    const dot = toggle.querySelector(".notif-dot");
-    if (dot) dot.style.display = "none";
-  }
+  // mark as read when opened
+  if (isOpen) fetch("/notifications/mark_read", { method: "POST" });
 });
 
 closeBtn.addEventListener("click", () => {
   sidebar.classList.remove("open");
   toggle.classList.remove("open");
 });
+</script>
 
-  </script>
 </body>
 </html>

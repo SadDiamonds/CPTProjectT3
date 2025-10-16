@@ -60,7 +60,7 @@
           {% if user.role == "Recipient" %}
             <hr>
             <p>Select your preferred donation categories:</p>
-            <label><input type="checkbox" name="categories" value="Clothes" {% if 'Clothes' in saved_categories %}checked{% endif %}> Clothes</label><br>
+            <label><input type="checkbox" name="categories" value="Clothing" {% if 'Clothing' in saved_categories %}checked{% endif %}> Clothing</label><br>
             <label><input type="checkbox" name="categories" value="Food" {% if 'Food' in saved_categories %}checked{% endif %}> Food</label><br>
             <label><input type="checkbox" name="categories" value="Books" {% if 'Books' in saved_categories %}checked{% endif %}> Education</label><br>
             <label><input type="checkbox" name="categories" value="Electronics" {% if 'Electronics' in saved_categories %}checked{% endif %}> Tech</label><br>

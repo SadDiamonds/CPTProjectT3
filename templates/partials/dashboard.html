@@ -4,89 +4,87 @@
 {% block content %}
 <div class="scroll-container">
   <div id="swup" class="transition-fade">
-  <main class="dashboard">
-    <h1>Welcome, {{ user.name }}!</h1>
+    <main class="dashboard">
+      <h1>Welcome, {{ user.name }}!</h1>
 
-    <!-- Profile Overview -->
-    <div class="profile-overview">
-      <div class="profile-info">
-        <p class="role">{{ user.role }}</p>
-        <br>
-        <p class="joined">Joined: {{ creation_str }}</p>
-        <p class="rating">
-          Average Rating:
-          {% if avg_rating is defined and avg_rating %}
-            {{ avg_rating|round(1) }}/5
-          {% else %}
-            N/A
-          {% endif %}
-        </p>
+      <!-- Profile Overview -->
+      <div class="profile-overview">
+        <div class="profile-info">
+          <p class="role">{{ user.role }}</p>
+          <br>
+          <p class="joined">Joined: {{ creation_str }}</p>
+        </div>
+
+        <div class="profile-actions">
+          <a href="{{ url_for('settings') }}" class="btn">Settings</a>
+          <a href="{{ url_for('signout') }}" class="btn btn-outline">Logout</a>
+        </div>
       </div>
 
-      <div class="profile-actions">
-        <a href="{{ url_for('settings') }}" class="btn">Settings</a>
-        <a href="{{ url_for('signout') }}" class="btn btn-outline">Logout</a>
+      <!-- Stats Cards -->
+      <div class="dashboard-stats">
+        {% if user.role == "Donor" %}
+          <div class="stat-card">
+            <h3>Total Donations</h3>
+            <p>{{ stats.total_donations }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Requested Donations</h3>
+            <p>{{ stats.requested_donations }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Completed Donations</h3>
+            <p>{{ stats.completed_donations }}</p>
+          </div>
+        {% else %}
+          <div class="stat-card">
+            <h3>Total Requests</h3>
+            <p>{{ stats.total_claims }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Pending Requests</h3>
+            <p>{{ stats.pending_claims }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Completed Requests</h3>
+            <p>{{ stats.completed_claims }}</p>
+          </div>
+        {% endif %}
       </div>
-    </div>
 
-    <!-- Stats Cards -->
-    <div class="dashboard-stats">
-      {% if user.role == "Donor" %}
-        <div class="stat-card">
-          <h3>Total Donations</h3>
-          <p>{{ stats.total_donations }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>Completed Matches</h3>
-          <p>{{ stats.completed_donations }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>Pending Matches</h3>
-          <p>{{ stats.pending_matches }}</p>
-        </div>
-      {% else %}
-        <div class="stat-card">
-          <h3>Total Claims</h3>
-          <p>{{ stats.total_claims }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>Completed Claims</h3>
-          <p>{{ stats.completed_claims }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>Pending Claims</h3>
-          <p>{{ stats.pending_claims }}</p>
-        </div>
-      {% endif %}
-    </div>
+      <!-- Quick Actions -->
+      <div class="dashboard-actions">
+        {% if user.role == "Donor" %}
+          <a href="{{ url_for('add') }}" class="btn">Add New Donation</a>
+          <a href="{{ url_for('my_donations') }}" class="btn">View My Donations</a>
+        {% else %}
+          <a href="{{ url_for('find_matches') }}" class="btn">Find Donations</a>
+          <a href="{{ url_for('my_requests') }}" class="btn">View My Requests</a>
+        {% endif %}
+      </div>
 
-    <!-- Quick Actions -->
-    <div class="dashboard-actions">
-      {% if user.role == "Donor" %}
-        <a href="{{ url_for('add') }}" class="btn">Add New Donation</a>
-        <a href="{{ url_for('matches') }}" class="btn">View My Donations</a>
-      {% else %}
-        <a href="{{ url_for('find_matches') }}" class="btn">Find Donations</a>
-        <a href="{{ url_for('matches') }}" class="btn">View My Requests</a>
-      {% endif %}
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="dashboard-recent">
-      <h2>Recent Activity</h2>
-      {% if recent %}
-        <ul>
-          {% for item in recent %}
-            <li>
-              <strong>{{ item.items }}</strong> – Status: {{ item.status }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No recent activity.</p>
-      {% endif %}
-    </div>
-  </main>
+      <!-- Recent Activity -->
+      <div class="dashboard-recent">
+        <h2>Recent Activity</h2>
+        {% if recent %}
+          <ul>
+            {% for item in recent %}
+              <li>
+                <strong>{{ item.items }}</strong> – Status: {{ item.status }}
+                {% if user.role == "Donor" and item.recipient_id %}
+                  – Requested by: {{ item.recipient_name }}
+                {% elif user.role == "Recipient" and item.recipient_id %}
+                  – Donor: {{ item.donor_name }}
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No recent activity.</p>
+        {% endif %}
+      </div>
+    </main>
+    <br>
   </div>
 </div>
 {% endblock %}

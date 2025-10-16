@@ -1,11 +1,10 @@
 {% extends "layout.html" %}
-
 {% block title %}Find Donations{% endblock %}
 
 {% block content %}
 <div id="swup" class="transition-fade">
-  <main class ="matches-page">
-    <h1>Available Donations Near You</h1>
+  <main class="matches-page">
+    <h1>Available Donations Matching Your Preferences</h1>
 
     <div class="container">
       {% if matches and matches|length > 0 %}
@@ -23,7 +22,7 @@
               <p><strong>Donor:</strong> {{ donation.donor_name }}</p>
 
               <form 
-                action="{{ url_for('request_match', donation_id=donation.donation_id) }}" 
+                action="{{ url_for('request_donation', donation_id=donation.donation_id) }}" 
                 method="POST"
               >
                 <button class="btn success" type="submit">Request Donation</button>
@@ -33,7 +32,8 @@
         {% endfor %}
       {% else %}
         <div class="no-matches">
-          <p>No available donations near your area.</p>
+          <p>No available donations match your selected preferences.</p>
+          <p><a href="{{ url_for('settings') }}">Update your preferences</a></p>
         </div>
       {% endif %}
     </div>

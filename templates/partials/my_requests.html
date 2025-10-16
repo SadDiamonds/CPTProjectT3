@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block title %}My Requests{% endblock %}
+
+{% block content %}
+<div id="swup" class="transition-fade">
+  <main class="dashboard">
+    <h1>My Requested Donations</h1>
+
+    <div class="container">
+      {% if requests and requests|length > 0 %}
+        {% for donation in requests %}
+          <div class="card" style="max-width: 20rem; flex: 1 1 300px; width:100%;">
+            <img 
+              src="{{ url_for('static', filename=donation.image_url or 'placeholder.png') }}" 
+              class="card-image"
+              alt="Donation Image"
+            >
+            <div class="card-body">
+              <h3>{{ donation.items }}</h3>
+              <p><strong>Category:</strong> {{ donation.category }}</p>
+              <p><strong>Status:</strong> {{ donation.status }}</p>
+              <p><strong>Donor:</strong> {{ donation.donor_name or 'Unknown' }}</p>
+
+              {% if donation.status == "Donated" %}
+                {% if not donation.review %}
+                  <form action="{{ url_for('leave_review', donation_id=donation.donation_id) }}" method="POST">
+                    <label for="review-{{ donation.donation_id }}">Leave a review:</label>
+                    <textarea id="review-{{ donation.donation_id }}" name="review" placeholder="Write your thoughts..." required></textarea>
+                    <button type="submit" class="btn success">Submit Review</button>
+                  </form>
+                {% else %}
+                  <p><strong>Your review:</strong> {{ donation.review }}</p>
+                {% endif %}
+              {% endif %}
+
+              {% if donation.status == 'Requested' %}
+                <span class="status-text">Waiting for donor confirmation</span>
+              {% elif donation.status == 'Completed' %}
+                <span style="color:green;">Donation completed</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="no-matches">
+          <p>You haven’t requested any donations yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

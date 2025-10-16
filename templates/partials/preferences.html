@@ -6,7 +6,7 @@
   <h1>Choose Your Preferred Categories</h1>
   <form action="{{ url_for('save_preferences') }}" method="POST">
     <div class="checkbox-group">
-      {% for category in ["Clothes", "Food", "Books", "Toys", "Furniture"] %}
+      {% for category in ["Clothing", "Food", "Books", "Toys", "Furniture"] %}
         <label>
           <input 
             type="checkbox" 
