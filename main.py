@@ -660,60 +660,6 @@ def leave_review(donation_id):
     return redirect(url_for("my_requests"))
 
 
-# ----------------- PROFILE (unchanged but ensure current_user passed) -----------------
-@app.route("/profile/<user_id>", methods=["GET"])
-@login_required
-def profile(user_id):
-    db = get_db()
-    profile_user = db.execute(
-        "SELECT * FROM Users WHERE user_id=?", (user_id,)
-    ).fetchone()
-    if not profile_user:
-        flash("User not found.", "error")
-        return redirect(url_for("home_page"))
-
-    # Parse creation date if stored as DD/MM/YYYY HH:MM:SS
-    created_str = getattr(profile_user, "creation_date", "")
-    try:
-        created_dt = datetime.strptime(created_str, "%d/%m/%Y %H:%M:%S")
-        created_str = created_dt.strftime("%d %B %Y, %H:%M")
-    except Exception:
-        pass
-
-    ratings = db.execute(
-        "SELECT r.rating, r.comment, u.name as rater_name FROM Ratings r JOIN Users u ON r.rater_id = u.user_id WHERE r.rated_id=?",
-        (user_id,),
-    ).fetchall()
-    avg_row = db.execute(
-        "SELECT AVG(rating) as avg FROM Ratings WHERE rated_id=?", (user_id,)
-    ).fetchone()
-
-    if avg_row and avg_row["avg"] is not None:
-        avg_rating = round(avg_row["avg"], 1)
-    else:
-        avg_rating = 0
-
-    badges = db.execute(
-        """
-        SELECT b.* 
-        FROM Badges b
-        JOIN UserBadges ub ON b.badge_id = ub.badge_id
-        WHERE ub.user_id=?
-        """,
-        (user_id,),
-    ).fetchall()
-
-    return render_template(
-        "partials/profile.html",
-        user=current_user(),
-        profile_user=profile_user,
-        ratings=ratings,
-        creation_str=created_str,
-        avg_rating=avg_rating or 0,
-        badges=badges,
-    )
-
-
 # ----------------- DASHBOARD -----------------
 @app.route("/dashboard")
 @login_required

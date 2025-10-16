@@ -30,7 +30,6 @@
         {% if user['role'] != 'Donor' %}
           <li><a href="{{ url_for('matches') }}">My Requests</a></li>
         {% endif %}
-        <li><a href="{{ url_for('profile', user_id=user['user_id']) }}">Profile</a></li>
         <li><a href="{{ url_for('signout') }}">Sign Out</a></li>
       {% endif %}
     </ul>
